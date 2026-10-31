@@ -1,0 +1,3299 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BOOKORA — Искусство чтения | Цифровой Дом Книги</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Cormorant Garamond (Editorial Serif) & Plus Jakarta Sans (Clean Modern Sans) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- GSAP for Smooth Animations -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: '#F5F0E8',
+            beige: '#EAE0D2',
+            sand: '#DFD2BF',
+            espresso: '#241B17',
+            charcoal: '#16100E',
+            cocoa: '#3A2D27',
+            gold: '#C6A46C',
+            goldLight: '#DFC394',
+            goldDark: '#9E7B43',
+          },
+          fontFamily: {
+            serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+            sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+          },
+          boxShadow: {
+            'editorial': '0 25px 60px -15px rgba(36, 27, 23, 0.14)',
+            'book': '-12px 18px 32px rgba(22, 16, 14, 0.35), -2px 4px 8px rgba(22, 16, 14, 0.2)',
+            'gold-glow': '0 10px 35px -5px rgba(198, 164, 108, 0.35)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg-cream: #F5F0E8;
+      --bg-beige: #EAE0D2;
+      --text-espresso: #241B17;
+      --accent-gold: #C6A46C;
+    }
+
+    body {
+      background-color: var(--bg-cream);
+      color: var(--text-espresso);
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      overflow-x: hidden;
+      selection-background-color: #C6A46C;
+      selection-color: #16100E;
+    }
+
+    ::selection {
+      background: #C6A46C;
+      color: #16100E;
+    }
+
+    /* Subtle Paper Grain Overlay */
+    .paper-texture {
+      background-image: radial-gradient(rgba(36, 27, 23, 0.04) 1px, transparent 0);
+      background-size: 24px 24px;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #EAE0D2;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #C6A46C;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #9E7B43;
+    }
+
+    /* Editorial Book Card with 3D Spine Illusion */
+    .editorial-card {
+      transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .editorial-card:hover {
+      transform: translateY(-8px);
+    }
+
+    .book-3d-wrapper {
+      perspective: 1200px;
+    }
+    .book-3d-object {
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.65s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.65s ease;
+      box-shadow: -10px 14px 28px rgba(22, 16, 14, 0.28);
+    }
+    .editorial-card:hover .book-3d-object {
+      transform: rotateY(-18deg) rotateX(4deg) translateZ(8px);
+      box-shadow: -20px 24px 38px rgba(22, 16, 14, 0.38);
+    }
+    /* Spine crease & pages edge on cards */
+    .book-3d-object::before {
+      content: '';
+      position: absolute;
+      top: 2px;
+      bottom: 2px;
+      left: -10px;
+      width: 10px;
+      background: linear-gradient(90deg, #16100E, #3A2D27 40%, #C6A46C 60%, #241B17);
+      transform: rotateY(-90deg);
+      transform-origin: right;
+      border-radius: 2px 0 0 2px;
+    }
+    .book-3d-object::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      bottom: 3px;
+      right: -8px;
+      width: 8px;
+      background: repeating-linear-gradient(90deg, #F9F6F0 0px, #E5DEC9 1px, #F9F6F0 2px);
+      transform: rotateY(90deg);
+      transform-origin: left;
+      box-shadow: inset 0 0 4px rgba(0,0,0,0.15);
+    }
+    .book-spine-highlight {
+      background: linear-gradient(90deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0) 12%, rgba(0,0,0,0.18) 16%, rgba(255,255,255,0) 24%);
+    }
+
+    /* Editorial Arch Frame */
+    .arch-frame {
+      border-radius: 140px 140px 16px 16px;
+    }
+
+    /* Curtain Transition */
+    #page-curtain {
+      pointer-events: none;
+      transform: scaleY(0);
+      transform-origin: bottom;
+    }
+
+    /* Gold shimmer line */
+    .gold-gradient-text {
+      background: linear-gradient(135deg, #9E7B43 0%, #C6A46C 45%, #E7D1A7 70%, #9E7B43 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .gold-border-glow:hover {
+      border-color: #C6A46C;
+      box-shadow: 0 12px 35px -8px rgba(198, 164, 108, 0.3);
+    }
+
+    /* Three.js Canvas Container */
+    #hero-canvas-container {
+      width: 100%;
+      height: 560px;
+      position: relative;
+      cursor: grab;
+      touch-action: pan-y;
+    }
+    #hero-canvas-container:active {
+      cursor: grabbing;
+    }
+    @media (max-width: 768px) {
+      #hero-canvas-container {
+        height: 430px;
+      }
+    }
+
+    /* Navigation underline effect */
+    .nav-link {
+      position: relative;
+    }
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0%;
+      height: 1.5px;
+      background-color: #C6A46C;
+      transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .nav-link:hover::after,
+    .nav-link.active::after {
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body class="paper-texture antialiased selection:bg-gold selection:text-charcoal">
+
+  <!-- ==================== LUXURY PRELOADER ==================== -->
+  <div id="preloader" class="fixed inset-0 z-[100] bg-charcoal text-cream flex flex-col items-center justify-center transition-opacity duration-700">
+    <div class="relative flex flex-col items-center">
+      <div class="w-20 h-20 rounded-full border border-gold/40 flex items-center justify-center mb-6 relative">
+        <div class="absolute inset-1 rounded-full border border-gold/20 animate-ping"></div>
+        <i class="fa-solid fa-book-open text-gold text-2xl"></i>
+      </div>
+      <h1 class="font-serif text-4xl md:text-5xl tracking-[0.28em] text-cream font-light">BOOKORA</h1>
+      <p id="preloader-sub" class="text-xs uppercase tracking-[0.35em] text-gold mt-3">Luxury Literary Maison • Est. MMXXVI</p>
+      <div class="w-48 h-[1px] bg-cocoa mt-8 overflow-hidden relative">
+        <div id="preloader-bar" class="h-full bg-gold w-0 transition-all duration-500"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PAGE TRANSITION CURTAIN ==================== -->
+  <div id="page-curtain" class="fixed inset-0 z-[90] bg-espresso flex items-center justify-center">
+    <span class="font-serif text-3xl tracking-[0.3em] text-gold">BOOKORA</span>
+  </div>
+
+  <!-- ==================== MULTI-PAGE ARCHITECTURE BAR (SIMULATED MULTI-HTML + EXPORT) ==================== -->
+  <div class="bg-charcoal text-beige/80 text-[11px] border-b border-gold/20 py-2 px-4 lg:px-10">
+    <div class="max-w-[1440px] mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+        <span class="text-gold uppercase tracking-widest font-semibold flex items-center gap-1.5 shrink-0">
+          <i class="fa-solid fa-sitemap text-[10px]"></i>
+          <span data-i18n="arch_pages">HTML-страницы:</span>
+        </span>
+        <button onclick="navigateTo('index.html')" data-page-pill="index.html" class="page-pill px-2.5 py-0.5 rounded-full bg-gold text-charcoal font-medium transition shrink-0">index.html</button>
+        <button onclick="navigateTo('catalog.html')" data-page-pill="catalog.html" class="page-pill px-2.5 py-0.5 rounded-full hover:bg-cocoa text-beige/80 transition shrink-0">catalog.html</button>
+        <button onclick="navigateTo('book.html')" data-page-pill="book.html" class="page-pill px-2.5 py-0.5 rounded-full hover:bg-cocoa text-beige/80 transition shrink-0">book.html</button>
+        <button onclick="navigateTo('favorites.html')" data-page-pill="favorites.html" class="page-pill px-2.5 py-0.5 rounded-full hover:bg-cocoa text-beige/80 transition shrink-0">favorites.html</button>
+        <button onclick="navigateTo('cart.html')" data-page-pill="cart.html" class="page-pill px-2.5 py-0.5 rounded-full hover:bg-cocoa text-beige/80 transition shrink-0">cart.html</button>
+        <button onclick="navigateTo('about.html')" data-page-pill="about.html" class="page-pill px-2.5 py-0.5 rounded-full hover:bg-cocoa text-beige/80 transition shrink-0">about.html</button>
+      </div>
+      <div class="flex items-center gap-4 shrink-0">
+        <span class="hidden sm:inline text-beige/60" data-i18n="free_shipping_bar">Бесплатная доставка по Ташкенту в бархатном футляре от 300 000 сум</span>
+        <button onclick="openExportModal()" class="text-gold hover:text-goldLight underline underline-offset-4 flex items-center gap-1 font-medium">
+          <i class="fa-solid fa-code text-[10px]"></i>
+          <span data-i18n="export_html_btn">Файлы проекта (6 HTML)</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== STICKY LUXURY HEADER ==================== -->
+  <header id="main-header" class="sticky top-0 z-50 bg-cream/90 backdrop-blur-md border-b border-espresso/10 transition-all duration-300">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 h-20 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <a href="#index.html" onclick="event.preventDefault(); navigateTo('index.html')" class="flex items-center gap-3 group">
+        <div class="w-10 h-10 rounded-full bg-espresso text-gold flex items-center justify-center border border-gold/40 group-hover:bg-gold group-hover:text-charcoal transition-colors duration-300">
+          <span class="font-serif font-bold text-xl tracking-tighter">B</span>
+        </div>
+        <div class="flex flex-col">
+          <span class="font-serif text-2xl sm:text-3xl tracking-[0.22em] text-espresso font-semibold leading-none">BOOKORA</span>
+          <span class="text-[9px] uppercase tracking-[0.3em] text-cocoa/70 mt-0.5" data-i18n="logo_sub">Maison du Livre</span>
+        </div>
+      </a>
+
+      <!-- Center Navigation Links -->
+      <nav class="hidden xl:flex items-center gap-8 text-sm font-medium text-espresso/90">
+        <a href="#index.html" onclick="event.preventDefault(); navigateTo('index.html')" data-nav="index.html" class="nav-link active py-1" data-i18n="nav_home">Главная</a>
+        <a href="#catalog.html" onclick="event.preventDefault(); navigateTo('catalog.html')" data-nav="catalog.html" class="nav-link py-1" data-i18n="nav_catalog">Каталог</a>
+        <a href="#new" onclick="event.preventDefault(); goToSectionOrCatalog('new')" class="nav-link py-1" data-i18n="nav_new">Новинки</a>
+        <a href="#bestsellers" onclick="event.preventDefault(); goToSectionOrCatalog('bestsellers')" class="nav-link py-1" data-i18n="nav_bestsellers">Бестселлеры</a>
+        <a href="#about.html" onclick="event.preventDefault(); navigateTo('about.html')" data-nav="about.html" class="nav-link py-1" data-i18n="nav_about">О нас</a>
+      </nav>
+
+      <!-- Right Action Controls -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Quick Search Input / Trigger -->
+        <div class="relative hidden md:block w-48 lg:w-64">
+          <input
+            id="header-search-input"
+            type="text"
+            oninput="handleGlobalSearch(this.value)"
+            onkeydown="if(event.key==='Enter'){ navigateTo('catalog.html'); }"
+            placeholder="Поиск книги, автора..."
+            data-i18n-placeholder="search_placeholder"
+            class="w-full bg-beige/70 hover:bg-beige focus:bg-white text-espresso placeholder-cocoa/50 text-xs rounded-full py-2.5 pl-9 pr-4 border border-espresso/15 focus:border-gold focus:outline-none transition"
+          />
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-cocoa/60 text-xs"></i>
+        </div>
+
+        <!-- Mobile Search Button -->
+        <button onclick="toggleSearchModal()" class="md:hidden w-10 h-10 rounded-full border border-espresso/15 flex items-center justify-center text-espresso hover:border-gold hover:text-goldDark transition" aria-label="Search">
+          <i class="fa-solid fa-magnifying-glass text-sm"></i>
+        </button>
+
+        <!-- Language Switcher UZ / RU -->
+        <div class="flex items-center bg-beige rounded-full p-0.5 border border-espresso/15">
+          <button id="lang-ru" onclick="setLanguage('ru')" class="px-2.5 py-1 rounded-full text-xs font-semibold transition bg-espresso text-cream">RU</button>
+          <button id="lang-uz" onclick="setLanguage('uz')" class="px-2.5 py-1 rounded-full text-xs font-semibold transition text-espresso/70 hover:text-espresso">UZ</button>
+        </div>
+
+        <!-- Favorites Button -->
+        <button onclick="navigateTo('favorites.html')" class="relative w-10 h-10 rounded-full border border-espresso/15 flex items-center justify-center text-espresso hover:border-gold hover:bg-beige/60 transition" title="Избранное">
+          <i class="fa-regular fa-heart text-sm"></i>
+          <span id="fav-badge" class="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-gold text-charcoal text-[10px] font-bold flex items-center justify-center">0</span>
+        </button>
+
+        <!-- Cart Button -->
+        <button onclick="navigateTo('cart.html')" class="relative px-3.5 h-10 rounded-full bg-espresso text-cream hover:bg-charcoal flex items-center gap-2 transition shadow-sm" title="Корзина">
+          <i class="fa-solid fa-bag-shopping text-xs text-gold"></i>
+          <span class="hidden sm:inline text-xs font-medium" data-i18n="nav_cart">Корзина</span>
+          <span id="cart-badge" class="w-5 h-5 rounded-full bg-gold text-charcoal text-[10px] font-bold flex items-center justify-center">0</span>
+        </button>
+
+        <!-- Auth / User Profile Button -->
+        <button onclick="openAuthModal()" id="user-btn" class="w-10 h-10 sm:w-auto sm:px-3.5 rounded-full border border-espresso/20 hover:border-gold flex items-center justify-center gap-2 text-xs font-medium text-espresso transition">
+          <i class="fa-regular fa-user text-goldDark"></i>
+          <span id="user-btn-label" class="hidden lg:inline" data-i18n="nav_login">Войти</span>
+        </button>
+
+        <!-- Mobile Menu Button -->
+        <button onclick="toggleMobileMenu()" class="xl:hidden w-10 h-10 rounded-full border border-espresso/15 flex items-center justify-center text-espresso">
+          <i id="mobile-menu-icon" class="fa-solid fa-bars text-sm"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <div id="mobile-menu" class="hidden xl:hidden bg-cream border-b border-espresso/15 px-6 py-5 space-y-4">
+      <div class="flex flex-col space-y-3 font-serif text-xl text-espresso">
+        <a href="#index.html" onclick="event.preventDefault(); toggleMobileMenu(); navigateTo('index.html')" data-i18n="nav_home">Главная</a>
+        <a href="#catalog.html" onclick="event.preventDefault(); toggleMobileMenu(); navigateTo('catalog.html')" data-i18n="nav_catalog">Каталог</a>
+        <a href="#new" onclick="event.preventDefault(); toggleMobileMenu(); goToSectionOrCatalog('new')" data-i18n="nav_new">Новинки</a>
+        <a href="#bestsellers" onclick="event.preventDefault(); toggleMobileMenu(); goToSectionOrCatalog('bestsellers')" data-i18n="nav_bestsellers">Бестселлеры</a>
+        <a href="#favorites.html" onclick="event.preventDefault(); toggleMobileMenu(); navigateTo('favorites.html')" data-i18n="nav_favorites">Избранное</a>
+        <a href="#cart.html" onclick="event.preventDefault(); toggleMobileMenu(); navigateTo('cart.html')" data-i18n="nav_cart">Корзина</a>
+        <a href="#about.html" onclick="event.preventDefault(); toggleMobileMenu(); navigateTo('about.html')" data-i18n="nav_about">О нас</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN VIEWPORT CONTAINER ==================== -->
+  <main id="app-viewport" class="min-h-screen">
+
+    <!-- =====================================================================
+         PAGE 1: INDEX.HTML (ГЛАВНАЯ СТРАНИЦА)
+         ===================================================================== -->
+    <section id="page-index" class="page-view block">
+      
+      <!-- 1. HERO SECTION WITH INTERACTIVE THREE.JS 3D BOOK -->
+      <div class="relative overflow-hidden border-b border-espresso/10 bg-gradient-to-b from-cream via-cream to-beige/60">
+        <!-- Decorative Background Editorial Lines -->
+        <div class="absolute inset-0 pointer-events-none opacity-30">
+          <div class="max-w-[1440px] mx-auto h-full border-x border-espresso/10 grid grid-cols-4">
+            <div class="border-r border-espresso/10"></div>
+            <div class="border-r border-espresso/10"></div>
+            <div class="border-r border-espresso/10"></div>
+          </div>
+        </div>
+
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 pt-8 pb-16 lg:py-16 relative z-10">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6 items-center">
+            
+            <!-- Left Column: Editorial Typography & Controls -->
+            <div class="lg:col-span-6 space-y-6">
+              <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-beige border border-gold/40">
+                <span class="w-2 h-2 rounded-full bg-gold animate-pulse"></span>
+                <span class="text-[11px] uppercase tracking-[0.25em] text-espresso font-semibold" data-i18n="hero_badge">Коллекционное издание • 3D Интерактив</span>
+              </div>
+
+              <h1 class="font-serif text-4xl sm:text-6xl xl:text-[68px] text-espresso leading-[1.04] tracking-tight">
+                <span data-i18n="hero_title_1">Где каждая книга —</span>
+                <span class="italic font-normal text-goldDark block mt-1" data-i18n="hero_title_2">произведение искусства.</span>
+              </h1>
+
+              <p class="text-cocoa/90 text-base sm:text-lg leading-relaxed max-w-xl font-normal" data-i18n="hero_subtitle">
+                Откройте для себя закрытую цифровую библиотеку редких изданий, мировой классики и интеллектуальных бестселлеров. Прикоснитесь к живой 3D-книге справа: вращайте её курсором, открывайте обложку и перелистывайте страницы.
+              </p>
+
+              <!-- Interactive 3D Book Controller Bar -->
+              <div class="bg-white/75 backdrop-blur-md p-4 sm:p-5 rounded-2xl border border-espresso/10 shadow-editorial space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-espresso/10 pb-3">
+                  <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-cube text-goldDark text-sm"></i>
+                    <span class="text-xs uppercase tracking-widest font-semibold text-espresso" data-i18n="hero_3d_panel_title">Управление 3D-книгой</span>
+                  </div>
+                  <span id="book-3d-status-badge" class="text-[11px] px-2.5 py-0.5 rounded-full bg-beige text-espresso font-medium" data-i18n="book_state_closed">Книга закрыта • Нажмите на 3D модель</span>
+                </div>
+
+                <!-- Action Buttons for the 3D Book -->
+                <div class="flex flex-wrap items-center gap-2.5">
+                  <button onclick="toggle3DBookOpen()" id="btn-3d-open" class="px-4 py-2.5 rounded-full bg-espresso text-cream hover:bg-charcoal text-xs font-medium flex items-center gap-2 transition shadow-sm">
+                    <i class="fa-solid fa-book-open text-gold"></i>
+                    <span id="btn-3d-open-text" data-i18n="btn_open_book">Открыть книгу</span>
+                  </button>
+
+                  <button onclick="flip3DPage()" id="btn-3d-flip" class="px-4 py-2.5 rounded-full bg-beige hover:bg-gold hover:text-charcoal text-espresso text-xs font-medium flex items-center gap-2 transition border border-espresso/15">
+                    <i class="fa-solid fa-forward-step"></i>
+                    <span data-i18n="btn_flip_page">Перелистнуть страницу</span>
+                  </button>
+
+                  <button onclick="spin3DBook360()" class="px-3.5 py-2.5 rounded-full bg-cream hover:bg-beige text-espresso text-xs font-medium flex items-center gap-1.5 transition border border-espresso/15" title="360°">
+                    <i class="fa-solid fa-rotate text-goldDark"></i>
+                    <span>360°</span>
+                  </button>
+
+                  <button onclick="openSelectedHeroBookPage()" class="px-3.5 py-2.5 rounded-full border border-gold text-espresso hover:bg-gold/20 text-xs font-semibold flex items-center gap-1.5 transition ml-auto">
+                    <span data-i18n="btn_buy_this_3d">О книге</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                  </button>
+                </div>
+
+                <!-- Switch Featured Book on 3D Stage -->
+                <div class="pt-1 flex items-center gap-3 overflow-x-auto no-scrollbar">
+                  <span class="text-[11px] uppercase tracking-wider text-cocoa/70 shrink-0" data-i18n="select_edition">Издание на сцене:</span>
+                  <button onclick="switchHero3DBook(1)" data-hero-edition="1" class="hero-edition-btn px-3 py-1 rounded-full text-xs font-medium bg-gold text-charcoal transition shrink-0">I. Кодекс Самарканда</button>
+                  <button onclick="switchHero3DBook(2)" data-hero-edition="2" class="hero-edition-btn px-3 py-1 rounded-full text-xs font-medium bg-beige/80 text-espresso hover:bg-beige transition shrink-0">II. Архитектура Тишины</button>
+                  <button onclick="switchHero3DBook(3)" data-hero-edition="3" class="hero-edition-btn px-3 py-1 rounded-full text-xs font-medium bg-beige/80 text-espresso hover:bg-beige transition shrink-0">III. Алхимия Капитала</button>
+                </div>
+              </div>
+
+              <!-- Main CTA Buttons -->
+              <div class="flex flex-wrap items-center gap-4 pt-2">
+                <button onclick="navigateTo('catalog.html')" class="px-8 py-4 rounded-full bg-espresso text-cream hover:bg-charcoal font-medium text-sm tracking-wide flex items-center gap-3 shadow-editorial hover:shadow-gold-glow transition group">
+                  <span data-i18n="hero_cta_catalog">Перейти в каталог</span>
+                  <i class="fa-solid fa-arrow-right text-gold group-hover:translate-x-1 transition-transform"></i>
+                </button>
+                <button onclick="addHeroBookToCart()" class="px-7 py-4 rounded-full bg-transparent border border-espresso/30 hover:border-gold text-espresso font-medium text-sm flex items-center gap-2.5 hover:bg-beige/60 transition">
+                  <i class="fa-solid fa-plus text-goldDark"></i>
+                  <span id="hero-book-price-btn">В корзину • 240 000 сум</span>
+                </button>
+              </div>
+
+              <!-- Editorial Metrics -->
+              <div class="grid grid-cols-3 gap-4 pt-4 border-t border-espresso/10 max-w-lg">
+                <div>
+                  <div class="font-serif text-2xl sm:text-3xl font-bold text-espresso">14,800+</div>
+                  <div class="text-xs text-cocoa/70" data-i18n="stat_1">Редких и кураторских книг</div>
+                </div>
+                <div>
+                  <div class="font-serif text-2xl sm:text-3xl font-bold text-espresso">4.98 ★</div>
+                  <div class="text-xs text-cocoa/70" data-i18n="stat_2">Оценка коллекционеров</div>
+                </div>
+                <div>
+                  <div class="font-serif text-2xl sm:text-3xl font-bold text-espresso">2 часа</div>
+                  <div class="text-xs text-cocoa/70" data-i18n="stat_3">Экспресс-доставка в Ташкенте</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Column: Interactive Three.js 3D Book Stage -->
+            <div class="lg:col-span-6 relative">
+              <!-- Ambient Gold Halo Behind 3D Book -->
+              <div class="absolute inset-8 rounded-full bg-gradient-to-tr from-gold/25 via-beige/40 to-transparent blur-3xl pointer-events-none"></div>
+
+              <!-- Interactive Hint Pill -->
+              <div class="absolute top-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none flex items-center gap-2 px-4 py-1.5 rounded-full bg-charcoal/85 text-cream text-[11px] backdrop-blur-md shadow-lg border border-gold/30 whitespace-nowrap">
+                <i class="fa-solid fa-hand-pointer text-gold animate-bounce"></i>
+                <span data-i18n="hero_3d_hint">Двигайте мышью для наклона • Кликните по книге, чтобы открыть и листать</span>
+              </div>
+
+              <!-- Three.js Canvas Mount -->
+              <div id="hero-canvas-container" class="rounded-3xl relative z-10"></div>
+
+              <!-- Floating Curated Info Card under 3D Book -->
+              <div class="mt-2 mx-auto max-w-md bg-white/85 backdrop-blur-md border border-espresso/10 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-sm">
+                <div>
+                  <span class="text-[10px] uppercase tracking-[0.2em] text-goldDark font-bold block" data-i18n="hero_curated_label">Выбор редакции BOOKORA</span>
+                  <h3 id="hero-card-title" class="font-serif text-xl font-semibold text-espresso">Самаркандский Звёздный Кодекс</h3>
+                  <p id="hero-card-author" class="text-xs text-cocoa/80">Алишер Навои & Мирзо Улугбек (Коллекционное переиздание)</p>
+                </div>
+                <div class="text-right shrink-0">
+                  <span id="hero-card-price" class="font-serif text-xl font-bold text-espresso block">240 000 сум</span>
+                  <span class="text-[11px] text-emerald-700 font-medium flex items-center justify-end gap-1">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                    <span data-i18n="in_stock">В наличии</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. POPULAR BOOKS (ПОПУЛЯРНЫЕ КНИГИ) - EDITORIAL ASYMMETRIC SHOWCASE -->
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-20">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+          <div>
+            <span class="text-xs uppercase tracking-[0.3em] text-goldDark font-semibold block mb-2" data-i18n="sec_popular_sub">Кураторская подборка • I</span>
+            <h2 class="font-serif text-4xl sm:text-5xl text-espresso" data-i18n="sec_popular_title">Популярные издания</h2>
+          </div>
+          <a href="#catalog.html" onclick="event.preventDefault(); navigateTo('catalog.html')" class="inline-flex items-center gap-2 text-sm font-medium text-espresso hover:text-goldDark group">
+            <span data-i18n="view_all_books">Смотреть весь каталог</span>
+            <i class="fa-solid fa-arrow-right-long text-goldDark group-hover:translate-x-1.5 transition-transform"></i>
+          </a>
+        </div>
+
+        <div id="popular-books-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+      </div>
+
+      <!-- 3. BESTSELLERS (БЕСТСЕЛЛЕРЫ) - LUXURY DARK EDITORIAL SECTION -->
+      <div id="section-bestsellers" class="bg-espresso text-cream py-24 relative overflow-hidden">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 relative z-10">
+          <div class="flex flex-col md:flex-row md:items-end justify-between mb-14 gap-4 border-b border-gold/20 pb-8">
+            <div>
+              <span class="text-xs uppercase tracking-[0.3em] text-gold font-semibold block mb-2" data-i18n="sec_bestsellers_sub">Мировое признание • II</span>
+              <h2 class="font-serif text-4xl sm:text-5xl text-cream" data-i18n="sec_bestsellers_title">Бестселлеры сезона</h2>
+            </div>
+            <p class="text-beige/70 text-sm max-w-md" data-i18n="sec_bestsellers_desc">
+              Книги, покорившие частные библиотеки Ташкента, Лондона и Парижа. Каждое издание отпечатано на архивной шведской бумаге Munken.
+            </p>
+          </div>
+
+          <div id="bestsellers-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+        </div>
+      </div>
+
+      <!-- 4. NEW ARRIVALS (НОВИНКИ) -->
+      <div id="section-new" class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-20">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+          <div>
+            <span class="text-xs uppercase tracking-[0.3em] text-goldDark font-semibold block mb-2" data-i18n="sec_new_sub">Свежий тираж • III</span>
+            <h2 class="font-serif text-4xl sm:text-5xl text-espresso" data-i18n="sec_new_title">Литературные новинки</h2>
+          </div>
+          <button onclick="navigateTo('catalog.html')" class="px-5 py-2.5 rounded-full border border-espresso/20 hover:border-gold text-xs uppercase tracking-widest font-semibold text-espresso transition" data-i18n="explore_new">
+            Все новинки 2026
+          </button>
+        </div>
+
+        <div id="new-books-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+      </div>
+
+      <!-- 5. INTERACTIVE CATEGORIES (КАТЕГОРИИ - ВСЕ 10 ЖАНРОВ) -->
+      <div class="bg-beige/60 border-y border-espresso/10 py-20">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12">
+          <div class="text-center max-w-2xl mx-auto mb-14">
+            <span class="text-xs uppercase tracking-[0.3em] text-goldDark font-semibold block mb-2" data-i18n="sec_cat_sub">Навигация по залам • IV</span>
+            <h2 class="font-serif text-4xl sm:text-5xl text-espresso" data-i18n="sec_cat_title">10 залов библиотеки BOOKORA</h2>
+            <p class="text-cocoa/80 text-sm mt-3" data-i18n="sec_cat_desc">Выберите интересующее направление, чтобы перейти в тематический зал каталога</p>
+          </div>
+
+          <div id="home-categories-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4"></div>
+        </div>
+      </div>
+
+      <!-- 6. SPECIAL OFFERS (СПЕЦИАЛЬНЫЕ ПРЕДЛОЖЕНИЯ И КОЛЛЕКЦИОННЫЕ БОКСЫ) -->
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-20">
+        <div class="rounded-3xl bg-gradient-to-br from-charcoal via-espresso to-cocoa text-cream p-8 sm:p-12 lg:p-16 relative overflow-hidden shadow-editorial border border-gold/30">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center relative z-10">
+            <div class="lg:col-span-7 space-y-6">
+              <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-gold/20 border border-gold/40 text-gold text-xs uppercase tracking-widest">
+                <i class="fa-solid fa-crown"></i>
+                <span data-i18n="offer_badge">Лимитированный тираж • Выгода 25%</span>
+              </div>
+              <h2 class="font-serif text-3xl sm:text-5xl leading-tight" data-i18n="offer_title">
+                Золотая трилогия «Шёлковый путь и Философия Востока» в дубовом футляре
+              </h2>
+              <p class="text-beige/80 text-sm sm:text-base leading-relaxed max-w-xl" data-i18n="offer_desc">
+                Эксклюзивный подарочный комплект из 3 книг с золотым обрезом, шёлковым ляссе и номерным экслибрисом. Идеальный подарок для ценителей высокой книжной культуры.
+              </p>
+              <div class="flex flex-wrap items-baseline gap-4 pt-2">
+                <span class="font-serif text-3xl sm:text-4xl text-gold font-bold">540 000 сум</span>
+                <span class="text-beige/50 line-through text-lg">720 000 сум</span>
+              </div>
+              <div class="flex flex-wrap gap-4 pt-2">
+                <button onclick="addSpecialBundleToCart()" class="px-8 py-4 rounded-full bg-gold text-charcoal hover:bg-goldLight font-semibold text-sm transition shadow-gold-glow flex items-center gap-2">
+                  <i class="fa-solid fa-bag-shopping"></i>
+                  <span data-i18n="offer_btn">Заказать коллекционный бокс</span>
+                </button>
+                <button onclick="navigateTo('catalog.html')" class="px-6 py-4 rounded-full border border-gold/40 text-cream hover:bg-white/10 text-sm transition" data-i18n="offer_secondary">
+                  Смотреть все акции
+                </button>
+              </div>
+            </div>
+
+            <div class="lg:col-span-5 flex justify-center">
+              <div class="relative group cursor-pointer" onclick="addSpecialBundleToCart()">
+                <div class="w-64 sm:w-72 h-80 sm:h-96 arch-frame bg-gradient-to-b from-gold/30 to-espresso border-2 border-gold/50 p-6 flex flex-col justify-between shadow-2xl transform group-hover:scale-105 transition duration-500">
+                  <div class="text-center border-b border-gold/30 pb-3">
+                    <span class="text-[10px] tracking-[0.3em] uppercase text-gold">COFFRET DE LUXE</span>
+                    <h4 class="font-serif text-2xl text-cream mt-1">EASTERN RENAISSANCE</h4>
+                  </div>
+                  <div class="my-auto flex justify-center">
+                    <div class="w-24 h-24 rounded-full border border-gold flex items-center justify-center">
+                      <i class="fa-solid fa-compass-drafting text-3xl text-gold"></i>
+                    </div>
+                  </div>
+                  <div class="text-center text-[11px] text-beige/80 tracking-widest uppercase">
+                    Tashkent • Samarkand • Bukhara
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7. RECOMMENDED BOOKS (РЕКОМЕНДУЕМЫЕ КНИГИ С ЗАМЕТКАМИ СОМЕЛЬЕ) -->
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-12">
+        <div class="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-4">
+          <div>
+            <span class="text-xs uppercase tracking-[0.3em] text-goldDark font-semibold block mb-2" data-i18n="sec_rec_sub">Литературный сомелье • V</span>
+            <h2 class="font-serif text-4xl sm:text-5xl text-espresso" data-i18n="sec_rec_title">Рекомендуем к вечернему чтению</h2>
+          </div>
+        </div>
+        <div id="recommended-books-grid" class="grid grid-cols-1 lg:grid-cols-3 gap-8"></div>
+      </div>
+
+      <!-- 8. STORE ADVANTAGES (ПРЕИМУЩЕСТВА МАГАЗИНА) -->
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-20">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div class="bg-white/70 border border-espresso/10 rounded-2xl p-7 gold-border-glow transition">
+            <div class="w-12 h-12 rounded-full bg-beige flex items-center justify-center text-espresso mb-5 border border-gold/40">
+              <i class="fa-solid fa-feather-pointed text-lg text-goldDark"></i>
+            </div>
+            <h3 class="font-serif text-2xl font-semibold text-espresso mb-2" data-i18n="adv_1_title">Архивная бумага</h3>
+            <p class="text-xs text-cocoa/80 leading-relaxed" data-i18n="adv_1_desc">Тёплый кремовый оттенок страниц бережёт зрение, а переплёт ручной работы служит десятилетиями.</p>
+          </div>
+
+          <div class="bg-white/70 border border-espresso/10 rounded-2xl p-7 gold-border-glow transition">
+            <div class="w-12 h-12 rounded-full bg-beige flex items-center justify-center text-espresso mb-5 border border-gold/40">
+              <i class="fa-solid fa-gift text-lg text-goldDark"></i>
+            </div>
+            <h3 class="font-serif text-2xl font-semibold text-espresso mb-2" data-i18n="adv_2_title">Бархатная упаковка</h3>
+            <p class="text-xs text-cocoa/80 leading-relaxed" data-i18n="adv_2_desc">Каждая книга доставляется в фирменном крафтовом тубусе или тканевом мешочке с сургучной печатью BOOKORA.</p>
+          </div>
+
+          <div class="bg-white/70 border border-espresso/10 rounded-2xl p-7 gold-border-glow transition">
+            <div class="w-12 h-12 rounded-full bg-beige flex items-center justify-center text-espresso mb-5 border border-gold/40">
+              <i class="fa-solid fa-truck-fast text-lg text-goldDark"></i>
+            </div>
+            <h3 class="font-serif text-2xl font-semibold text-espresso mb-2" data-i18n="adv_3_title">Доставка за 2 часа</h3>
+            <p class="text-xs text-cocoa/80 leading-relaxed" data-i18n="adv_3_desc">Собственная курьерская служба в Ташкенте и бережная экспресс-отправка во все регионы Узбекистана.</p>
+          </div>
+
+          <div class="bg-white/70 border border-espresso/10 rounded-2xl p-7 gold-border-glow transition">
+            <div class="w-12 h-12 rounded-full bg-beige flex items-center justify-center text-espresso mb-5 border border-gold/40">
+              <i class="fa-solid fa-award text-lg text-goldDark"></i>
+            </div>
+            <h3 class="font-serif text-2xl font-semibold text-espresso mb-2" data-i18n="adv_4_title">Строгий кураторский отбор</h3>
+            <p class="text-xs text-cocoa/80 leading-relaxed" data-i18n="adv_4_desc">Мы отбираем только лучшие переводы, полные несокращённые тексты и эталонные типографские издания.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 9. CUSTOMER REVIEWS (ОТЗЫВЫ ПОКУПАТЕЛЕЙ) -->
+      <div class="bg-beige/50 border-t border-espresso/10 py-20">
+        <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12">
+          <div class="text-center max-w-xl mx-auto mb-14">
+            <span class="text-xs uppercase tracking-[0.3em] text-goldDark font-semibold block mb-2" data-i18n="sec_rev_sub">Клуб читателей • VI</span>
+            <h2 class="font-serif text-4xl sm:text-5xl text-espresso" data-i18n="sec_rev_title">Отзывы ценителей BOOKORA</h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="bg-cream p-8 rounded-2xl border border-espresso/10 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="text-gold text-xs mb-4">★★★★★</div>
+                <p class="font-serif italic text-xl text-espresso leading-relaxed mb-6" data-i18n="rev_1_text">
+                  «Никогда не видела такого внимания к деталям. Книга пришла в плотном футляре с ароматом сандала и личной закладкой с тиснением золота. Настоящий бутик!»
+                </p>
+              </div>
+              <div class="flex items-center gap-3 pt-4 border-t border-espresso/10">
+                <div class="w-10 h-10 rounded-full bg-espresso text-gold font-serif flex items-center justify-center font-bold">К</div>
+                <div>
+                  <div class="text-xs font-bold text-espresso">Камола Юсупова</div>
+                  <div class="text-[11px] text-cocoa/70">Архитектор, Ташкент</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-cream p-8 rounded-2xl border border-espresso/10 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="text-gold text-xs mb-4">★★★★★</div>
+                <p class="font-serif italic text-xl text-espresso leading-relaxed mb-6" data-i18n="rev_2_text">
+                  «Собрал через BOOKORA уже половину домашней библиотеки по финансам и истории. 3D-превью на сайте позволяет оценить переплёт ещё до покупки.»
+                </p>
+              </div>
+              <div class="flex items-center gap-3 pt-4 border-t border-espresso/10">
+                <div class="w-10 h-10 rounded-full bg-espresso text-gold font-serif flex items-center justify-center font-bold">Т</div>
+                <div>
+                  <div class="text-xs font-bold text-espresso">Тимур Исмаилов</div>
+                  <div class="text-[11px] text-cocoa/70">Инвестиционный партнёр</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-cream p-8 rounded-2xl border border-espresso/10 shadow-sm flex flex-col justify-between">
+              <div>
+                <div class="text-gold text-xs mb-4">★★★★★</div>
+                <p class="font-serif italic text-xl text-espresso leading-relaxed mb-6" data-i18n="rev_3_text">
+                  «Заказывала подарочный бокс руководителю. Курьер в белых перчатках доставил заказ за полтора часа. Безупречный сервис европейского уровня.»
+                </p>
+              </div>
+              <div class="flex items-center gap-3 pt-4 border-t border-espresso/10">
+                <div class="w-10 h-10 rounded-full bg-espresso text-gold font-serif flex items-center justify-center font-bold">Д</div>
+                <div>
+                  <div class="text-xs font-bold text-espresso">Дильноза Рахимова</div>
+                  <div class="text-[11px] text-cocoa/70">Арт-куратор, Самарканд</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 10. NEWSLETTER (ПОДПИСКА НА ЛИТЕРАТУРНЫЙ ЖУРНАЛ) -->
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 py-20">
+        <div class="bg-beige rounded-3xl p-8 sm:p-14 border border-espresso/15 text-center max-w-4xl mx-auto">
+          <span class="text-xs uppercase tracking-[0.3em] text-goldDark font-semibold" data-i18n="news_sub">Закрытый клуб читателей</span>
+          <h2 class="font-serif text-3xl sm:text-5xl text-espresso mt-2 mb-4" data-i18n="news_title">Письма о книгах и редких тиражах</h2>
+          <p class="text-cocoa/80 text-sm max-w-xl mx-auto mb-8" data-i18n="news_desc">
+            Один раз в две недели мы отправляем эссе главного редактора и ранний доступ к лимитированным изданиям. Подарок 50 000 сум на первый заказ.
+          </p>
+          <form onsubmit="handleNewsletterSubmit(event)" class="flex flex-col sm:flex-row gap-3 max-w-lg mx-auto">
+            <input
+              id="newsletter-email"
+              type="email"
+              required
+              placeholder="Ваш e-mail адрес..."
+              class="flex-1 px-5 py-3.5 rounded-full bg-cream border border-espresso/20 text-sm text-espresso focus:outline-none focus:border-gold"
+            />
+            <button type="submit" class="px-8 py-3.5 rounded-full bg-espresso text-cream hover:bg-charcoal text-xs uppercase tracking-widest font-semibold transition shrink-0" data-i18n="news_btn">
+              Подписаться
+            </button>
+          </form>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =====================================================================
+         PAGE 2: CATALOG.HTML (ПОЛНЫЙ КАТАЛОГ КНИГ)
+         ===================================================================== -->
+    <section id="page-catalog" class="page-view hidden py-12">
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12">
+        
+        <!-- Breadcrumb & Title -->
+        <div class="border-b border-espresso/10 pb-8 mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <div class="text-xs text-cocoa/70 mb-2 flex items-center gap-2">
+              <a href="#index.html" onclick="event.preventDefault(); navigateTo('index.html')" class="hover:text-espresso" data-i18n="nav_home">Главная</a>
+              <span>/</span>
+              <span class="text-goldDark font-medium" data-i18n="nav_catalog">Каталог</span>
+            </div>
+            <h1 class="font-serif text-4xl sm:text-6xl text-espresso" data-i18n="catalog_heading">Большой каталог изданий</h1>
+          </div>
+          <div class="text-sm text-cocoa/80">
+            <span data-i18n="found_books">Найдено изданий:</span>
+            <strong id="catalog-count" class="text-espresso font-serif text-xl ml-1">20</strong>
+          </div>
+        </div>
+
+        <!-- Search, Category Pills & Sorting Toolbar -->
+        <div class="space-y-6 mb-10">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+            <!-- Search Input -->
+            <div class="md:col-span-6 relative">
+              <input
+                id="catalog-search-input"
+                type="text"
+                oninput="handleCatalogSearch(this.value)"
+                placeholder="Поиск по названию книги или автору..."
+                data-i18n-placeholder="search_placeholder"
+                class="w-full px-5 py-3.5 pl-11 rounded-full bg-white border border-espresso/15 text-sm text-espresso focus:outline-none focus:border-gold"
+              />
+              <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-cocoa/60"></i>
+            </div>
+
+            <!-- Sort Select -->
+            <div class="md:col-span-3">
+              <select id="catalog-sort-select" onchange="handleCatalogSort(this.value)" class="w-full px-5 py-3.5 rounded-full bg-white border border-espresso/15 text-sm text-espresso focus:outline-none focus:border-gold">
+                <option value="popular" data-i18n="sort_popular">По популярности</option>
+                <option value="rating" data-i18n="sort_rating">По высокому рейтингу ★</option>
+                <option value="price-asc" data-i18n="sort_price_asc">Сначала дешевле (UZS)</option>
+                <option value="price-desc" data-i18n="sort_price_desc">Сначала дороже (UZS)</option>
+              </select>
+            </div>
+
+            <!-- Reset Filters -->
+            <div class="md:col-span-3">
+              <button onclick="resetCatalogFilters()" class="w-full py-3.5 px-5 rounded-full border border-espresso/20 hover:border-gold text-xs uppercase tracking-widest font-semibold text-espresso hover:bg-beige/60 transition">
+                <i class="fa-solid fa-rotate-left mr-1.5 text-goldDark"></i>
+                <span data-i18n="reset_filters">Сбросить фильтры</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Category Filter Pills (All 10 Categories) -->
+          <div id="catalog-category-pills" class="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar"></div>
+        </div>
+
+        <!-- Catalog Books Grid -->
+        <div id="catalog-books-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         PAGE 3: BOOK.HTML (СТРАНИЦА КОНКРЕТНОЙ КНИГИ)
+         ===================================================================== -->
+    <section id="page-book" class="page-view hidden py-12">
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12">
+        <div id="book-detail-container"></div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         PAGE 4: FAVORITES.HTML (ИЗБРАННОЕ)
+         ===================================================================== -->
+    <section id="page-favorites" class="page-view hidden py-12">
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12">
+        <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b border-espresso/10 pb-8 mb-10 gap-4">
+          <div>
+            <span class="text-xs uppercase tracking-[0.3em] text-goldDark font-semibold block mb-2" data-i18n="fav_sub">Личная коллекция</span>
+            <h1 class="font-serif text-4xl sm:text-6xl text-espresso" data-i18n="fav_heading">Избранные книги</h1>
+          </div>
+          <button onclick="moveAllFavoritesToCart()" class="px-6 py-3 rounded-full bg-espresso text-cream hover:bg-charcoal text-xs uppercase tracking-widest font-semibold transition self-start sm:self-auto">
+            <i class="fa-solid fa-bag-shopping text-gold mr-2"></i>
+            <span data-i18n="fav_move_all">Добавить всё в корзину</span>
+          </button>
+        </div>
+
+        <div id="favorites-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         PAGE 5: CART.HTML (КОРЗИНА И ОФОРМЛЕНИЕ ЗАКАЗА)
+         ===================================================================== -->
+    <section id="page-cart" class="page-view hidden py-12">
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12">
+        <div class="border-b border-espresso/10 pb-8 mb-10">
+          <span class="text-xs uppercase tracking-[0.3em] text-goldDark font-semibold block mb-2" data-i18n="cart_sub">Ваш заказ в BOOKORA</span>
+          <h1 class="font-serif text-4xl sm:text-6xl text-espresso" data-i18n="cart_heading">Корзина покупок</h1>
+        </div>
+
+        <div id="cart-content-wrapper"></div>
+      </div>
+    </section>
+
+    <!-- =====================================================================
+         PAGE 6: ABOUT.HTML (О МАГАЗИНЕ BOOKORA)
+         ===================================================================== -->
+    <section id="page-about" class="page-view hidden py-12">
+      <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12 space-y-20">
+        
+        <!-- Editorial Hero of About Page -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center border-b border-espresso/10 pb-16">
+          <div class="lg:col-span-7 space-y-6">
+            <span class="text-xs uppercase tracking-[0.3em] text-goldDark font-semibold" data-i18n="about_sub">Манифест BOOKORA • Ташкент</span>
+            <h1 class="font-serif text-4xl sm:text-6xl text-espresso leading-tight" data-i18n="about_heading">
+              Мы возрождаем культуру физических книг как предметов высокой эстетики.
+            </h1>
+            <p class="text-cocoa/90 text-base sm:text-lg leading-relaxed" data-i18n="about_p1">
+              BOOKORA родилась на пересечении великого наследия восточных библиотек Самарканда и Бухары и современного швейцарского типографского минимализма. Мы верим, что бумажная книга в эпоху цифрового шума — это пространство тишины, интеллектуальной роскоши и тактильного удовольствия.
+            </p>
+            <p class="text-cocoa/80 text-sm leading-relaxed" data-i18n="about_p2">
+              Наш флагманский шоурум-гостиная в центре Ташкента объединяет кураторский книжный дом, спешелти-кофейню и лекторий, где проходят закрытые чтения и презентации редких тиражей.
+            </p>
+          </div>
+          <div class="lg:col-span-5">
+            <div class="arch-frame bg-espresso text-cream p-10 border-2 border-gold/40 shadow-editorial space-y-6 text-center">
+              <i class="fa-solid fa-landmark text-4xl text-gold"></i>
+              <h3 class="font-serif text-3xl">Maison BOOKORA</h3>
+              <p class="text-xs text-beige/80 leading-relaxed">
+                Узбекистан, г. Ташкент, ул. Тараса Шевченко, 24<br/>
+                Ежедневно с 09:00 до 23:00
+              </p>
+              <div class="pt-4 border-t border-gold/20 grid grid-cols-2 gap-4">
+                <div>
+                  <div class="font-serif text-3xl text-gold font-bold">2021</div>
+                  <div class="text-[11px] uppercase tracking-widest text-beige/70">Год основания</div>
+                </div>
+                <div>
+                  <div class="font-serif text-3xl text-gold font-bold">42 000</div>
+                  <div class="text-[11px] uppercase tracking-widest text-beige/70">Постоянных читателей</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contact Form Section -->
+        <div class="max-w-3xl mx-auto bg-white/80 rounded-3xl p-8 sm:p-12 border border-espresso/10 shadow-sm">
+          <h2 class="font-serif text-3xl sm:text-4xl text-espresso mb-2" data-i18n="about_contact_title">Связаться с главным куратором</h2>
+          <p class="text-xs text-cocoa/80 mb-6" data-i18n="about_contact_sub">Ищете редкое букинистическое издание или хотите собрать корпоративную библиотеку? Напишите нам.</p>
+          <form onsubmit="handleContactSubmit(event)" class="space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <input type="text" required placeholder="Ваше имя" class="px-4 py-3 rounded-xl bg-cream border border-espresso/15 text-sm focus:outline-none focus:border-gold" />
+              <input type="tel" required placeholder="Телефон (+998 ...)" class="px-4 py-3 rounded-xl bg-cream border border-espresso/15 text-sm focus:outline-none focus:border-gold" />
+            </div>
+            <textarea rows="4" required placeholder="Опишите ваш запрос или название искомой книги..." class="w-full px-4 py-3 rounded-xl bg-cream border border-espresso/15 text-sm focus:outline-none focus:border-gold"></textarea>
+            <button type="submit" class="px-8 py-3.5 rounded-full bg-espresso text-cream hover:bg-charcoal text-xs uppercase tracking-widest font-semibold transition" data-i18n="about_send_btn">
+              Отправить сообщение
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== GRAND LUXURY FOOTER ==================== -->
+  <footer class="bg-charcoal text-cream border-t border-gold/20 pt-20 pb-12 mt-20">
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-8 lg:px-12">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-10 pb-16 border-b border-gold/15">
+        
+        <div class="lg:col-span-4 space-y-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gold text-charcoal flex items-center justify-center font-serif font-bold text-xl">B</div>
+            <span class="font-serif text-3xl tracking-[0.22em] text-cream">BOOKORA</span>
+          </div>
+          <p class="text-xs text-beige/70 leading-relaxed max-w-sm" data-i18n="footer_desc">
+            Премиальный цифровой книжный дом в Узбекистане. Отбираем выдающиеся книги мира в коллекционном и подарочном исполнении.
+          </p>
+          <div class="flex items-center gap-3 pt-2">
+            <a href="#telegram" onclick="event.preventDefault(); showToast('Telegram-канал @bookora_uz открыт')" class="w-9 h-9 rounded-full border border-gold/30 flex items-center justify-center text-gold hover:bg-gold hover:text-charcoal transition"><i class="fa-brands fa-telegram"></i></a>
+            <a href="#instagram" onclick="event.preventDefault(); showToast('Instagram @bookora.maison')" class="w-9 h-9 rounded-full border border-gold/30 flex items-center justify-center text-gold hover:bg-gold hover:text-charcoal transition"><i class="fa-brands fa-instagram"></i></a>
+            <a href="#youtube" onclick="event.preventDefault(); showToast('YouTube лекторий BOOKORA')" class="w-9 h-9 rounded-full border border-gold/30 flex items-center justify-center text-gold hover:bg-gold hover:text-charcoal transition"><i class="fa-brands fa-youtube"></i></a>
+          </div>
+        </div>
+
+        <div class="lg:col-span-3 space-y-3">
+          <h4 class="text-xs uppercase tracking-[0.25em] text-gold font-semibold" data-i18n="footer_pages">Страницы проекта</h4>
+          <ul class="space-y-2.5 text-xs text-beige/80">
+            <li><a href="#index.html" onclick="event.preventDefault(); navigateTo('index.html')" class="hover:text-gold transition">index.html — <span data-i18n="nav_home">Главная</span></a></li>
+            <li><a href="#catalog.html" onclick="event.preventDefault(); navigateTo('catalog.html')" class="hover:text-gold transition">catalog.html — <span data-i18n="nav_catalog">Каталог</span></a></li>
+            <li><a href="#book.html" onclick="event.preventDefault(); navigateTo('book.html')" class="hover:text-gold transition">book.html — <span data-i18n="nav_book_page">Страница книги</span></a></li>
+            <li><a href="#favorites.html" onclick="event.preventDefault(); navigateTo('favorites.html')" class="hover:text-gold transition">favorites.html — <span data-i18n="nav_favorites">Избранное</span></a></li>
+            <li><a href="#cart.html" onclick="event.preventDefault(); navigateTo('cart.html')" class="hover:text-gold transition">cart.html — <span data-i18n="nav_cart">Корзина</span></a></li>
+            <li><a href="#about.html" onclick="event.preventDefault(); navigateTo('about.html')" class="hover:text-gold transition">about.html — <span data-i18n="nav_about">О нас</span></a></li>
+          </ul>
+        </div>
+
+        <div class="lg:col-span-3 space-y-3">
+          <h4 class="text-xs uppercase tracking-[0.25em] text-gold font-semibold" data-i18n="footer_cats">Популярные залы</h4>
+          <ul class="space-y-2.5 text-xs text-beige/80">
+            <li><a href="#cat" onclick="event.preventDefault(); filterCatalogByCategory('fiction')" class="hover:text-gold transition" data-i18n="cat_fiction">Художественная литература</a></li>
+            <li><a href="#cat" onclick="event.preventDefault(); filterCatalogByCategory('business')" class="hover:text-gold transition" data-i18n="cat_business">Бизнес и финансы</a></li>
+            <li><a href="#cat" onclick="event.preventDefault(); filterCatalogByCategory('psychology')" class="hover:text-gold transition" data-i18n="cat_psychology">Психология</a></li>
+            <li><a href="#cat" onclick="event.preventDefault(); filterCatalogByCategory('history')" class="hover:text-gold transition" data-i18n="cat_history">История</a></li>
+            <li><a href="#cat" onclick="event.preventDefault(); filterCatalogByCategory('it')" class="hover:text-gold transition" data-i18n="cat_it">Программирование и IT</a></li>
+          </ul>
+        </div>
+
+        <div class="lg:col-span-2 space-y-3">
+          <h4 class="text-xs uppercase tracking-[0.25em] text-gold font-semibold" data-i18n="footer_contacts">Бутик в Ташкенте</h4>
+          <p class="text-xs text-beige/80 leading-relaxed">
+            +998 (71) 200-88-99<br/>
+            concierge@bookora.uz<br/>
+            Ташкент, ул. Т. Шевченко, 24
+          </p>
+          <div class="pt-2 flex items-center gap-2 text-[11px] text-gold">
+            <span>UZCARD</span> • <span>HUMO</span> • <span>VISA</span> • <span>PAYME</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-beige/50 gap-4">
+        <div>© 2026 BOOKORA Maison du Livre. All rights reserved.</div>
+        <div class="flex items-center gap-4">
+          <button onclick="openExportModal()" class="text-gold hover:underline">Скачать 6 отдельных HTML-страниц</button>
+          <span>•</span>
+          <span>Three.js WebGL + GSAP Engine</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ==================== AUTH MODAL (РЕГИСТРАЦИЯ И АВТОРИЗАЦИЯ) ==================== -->
+  <div id="auth-modal" class="fixed inset-0 z-[80] hidden items-center justify-center bg-charcoal/70 backdrop-blur-sm p-4">
+    <div class="bg-cream border border-gold/40 rounded-3xl max-w-md w-full p-8 relative shadow-2xl">
+      <button onclick="closeAuthModal()" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-beige flex items-center justify-center text-espresso hover:bg-gold transition">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+
+      <div class="text-center mb-6">
+        <span class="text-[10px] uppercase tracking-[0.3em] text-goldDark font-bold">BOOKORA CLUB</span>
+        <h3 id="auth-modal-title" class="font-serif text-3xl text-espresso mt-1" data-i18n="auth_title">Личный кабинет читателя</h3>
+      </div>
+
+      <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
+        <div>
+          <label class="text-xs font-medium text-espresso block mb-1" data-i18n="auth_name">Ваше имя</label>
+          <input id="auth-name-input" type="text" required placeholder="Азизбек Каримов" class="w-full px-4 py-3 rounded-xl bg-white border border-espresso/20 text-sm focus:outline-none focus:border-gold" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-espresso block mb-1">Email / Телефон</label>
+          <input id="auth-email-input" type="text" required placeholder="reader@bookora.uz" class="w-full px-4 py-3 rounded-xl bg-white border border-espresso/20 text-sm focus:outline-none focus:border-gold" />
+        </div>
+        <div>
+          <label class="text-xs font-medium text-espresso block mb-1" data-i18n="auth_pass">Пароль</label>
+          <input id="auth-pass-input" type="password" required placeholder="••••••••" class="w-full px-4 py-3 rounded-xl bg-white border border-espresso/20 text-sm focus:outline-none focus:border-gold" />
+        </div>
+        <button type="submit" class="w-full py-3.5 rounded-full bg-espresso text-cream hover:bg-charcoal text-xs uppercase tracking-widest font-semibold transition shadow-md" data-i18n="auth_submit">
+          Войти / Зарегистрироваться
+        </button>
+      </form>
+
+      <div id="auth-logout-area" class="hidden mt-4 pt-4 border-t border-espresso/10 text-center">
+        <button onclick="logoutUser()" class="text-xs text-red-700 hover:underline font-medium">Выйти из аккаунта</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== READING EXCERPT MODAL (ЧИТАТЬ ФРАГМЕНТ КНИГИ) ==================== -->
+  <div id="excerpt-modal" class="fixed inset-0 z-[80] hidden items-center justify-center bg-charcoal/80 backdrop-blur-sm p-4">
+    <div class="bg-cream border-2 border-gold/50 rounded-3xl max-w-2xl w-full p-8 sm:p-12 relative shadow-2xl max-h-[85vh] overflow-y-auto">
+      <button onclick="closeExcerptModal()" class="sticky top-2 float-right w-9 h-9 rounded-full bg-beige flex items-center justify-center text-espresso hover:bg-gold transition">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <span class="text-[10px] uppercase tracking-[0.3em] text-goldDark font-bold block">ОЗНАКОМИТЕЛЬНЫЙ ФРАГМЕНТ • ГЛАВА I</span>
+      <h3 id="excerpt-title" class="font-serif text-3xl text-espresso mt-1 mb-6"></h3>
+      <div id="excerpt-body" class="font-serif text-xl leading-relaxed text-espresso/90 space-y-4 border-y border-espresso/15 py-6"></div>
+      <div class="mt-6 flex justify-between items-center text-xs text-cocoa/70">
+        <span>Страница 1 из 340 • Бумага Munken Cream</span>
+        <button onclick="closeExcerptModal()" class="px-5 py-2 rounded-full bg-espresso text-cream">Закрыть превью</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== EXPORT 6 SEPARATE HTML FILES MODAL ==================== -->
+  <div id="export-modal" class="fixed inset-0 z-[85] hidden items-center justify-center bg-charcoal/80 backdrop-blur-sm p-4">
+    <div class="bg-cream border border-gold/40 rounded-3xl max-w-2xl w-full p-8 relative shadow-2xl">
+      <button onclick="closeExportModal()" class="absolute top-5 right-5 w-9 h-9 rounded-full bg-beige flex items-center justify-center text-espresso hover:bg-gold transition">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+      <span class="text-[10px] uppercase tracking-[0.3em] text-goldDark font-bold">АРХИТЕКТУРА ПРОЕКТА BOOKORA</span>
+      <h3 class="font-serif text-3xl text-espresso mt-1 mb-3">Отдельные HTML-страницы сайта</h3>
+      <p class="text-xs text-cocoa/80 leading-relaxed mb-6">
+        В этом окне вы можете мгновенно перейти на любую из 6 страниц или скачать каждую страницу (`index.html`, `catalog.html`, `book.html`, `favorites.html`, `cart.html`, `about.html`) как отдельный автономный HTML-файл с предустановленной активной точкой входа.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+        <div class="p-4 rounded-2xl bg-white border border-espresso/10 flex items-center justify-between">
+          <div>
+            <div class="font-mono text-xs font-bold text-espresso">1. index.html</div>
+            <div class="text-[11px] text-cocoa/70">Главная + 3D-книга Three.js</div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="closeExportModal(); navigateTo('index.html')" class="px-3 py-1.5 rounded-full bg-beige text-xs font-medium">Открыть</button>
+            <button onclick="downloadStandalonePage('index.html')" class="px-3 py-1.5 rounded-full bg-espresso text-gold text-xs"><i class="fa-solid fa-download"></i></button>
+          </div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white border border-espresso/10 flex items-center justify-between">
+          <div>
+            <div class="font-mono text-xs font-bold text-espresso">2. catalog.html</div>
+            <div class="text-[11px] text-cocoa/70">10 категорий, поиск, фильтры</div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="closeExportModal(); navigateTo('catalog.html')" class="px-3 py-1.5 rounded-full bg-beige text-xs font-medium">Открыть</button>
+            <button onclick="downloadStandalonePage('catalog.html')" class="px-3 py-1.5 rounded-full bg-espresso text-gold text-xs"><i class="fa-solid fa-download"></i></button>
+          </div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white border border-espresso/10 flex items-center justify-between">
+          <div>
+            <div class="font-mono text-xs font-bold text-espresso">3. book.html</div>
+            <div class="text-[11px] text-cocoa/70">Карточка книги + 3D обложка</div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="closeExportModal(); navigateTo('book.html')" class="px-3 py-1.5 rounded-full bg-beige text-xs font-medium">Открыть</button>
+            <button onclick="downloadStandalonePage('book.html')" class="px-3 py-1.5 rounded-full bg-espresso text-gold text-xs"><i class="fa-solid fa-download"></i></button>
+          </div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white border border-espresso/10 flex items-center justify-between">
+          <div>
+            <div class="font-mono text-xs font-bold text-espresso">4. favorites.html</div>
+            <div class="text-[11px] text-cocoa/70">Избранные издания</div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="closeExportModal(); navigateTo('favorites.html')" class="px-3 py-1.5 rounded-full bg-beige text-xs font-medium">Открыть</button>
+            <button onclick="downloadStandalonePage('favorites.html')" class="px-3 py-1.5 rounded-full bg-espresso text-gold text-xs"><i class="fa-solid fa-download"></i></button>
+          </div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white border border-espresso/10 flex items-center justify-between">
+          <div>
+            <div class="font-mono text-xs font-bold text-espresso">5. cart.html</div>
+            <div class="text-[11px] text-cocoa/70">Корзина и расчёт в сумах</div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="closeExportModal(); navigateTo('cart.html')" class="px-3 py-1.5 rounded-full bg-beige text-xs font-medium">Открыть</button>
+            <button onclick="downloadStandalonePage('cart.html')" class="px-3 py-1.5 rounded-full bg-espresso text-gold text-xs"><i class="fa-solid fa-download"></i></button>
+          </div>
+        </div>
+        <div class="p-4 rounded-2xl bg-white border border-espresso/10 flex items-center justify-between">
+          <div>
+            <div class="font-mono text-xs font-bold text-espresso">6. about.html</div>
+            <div class="text-[11px] text-cocoa/70">Философия и бутик в Ташкенте</div>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="closeExportModal(); navigateTo('about.html')" class="px-3 py-1.5 rounded-full bg-beige text-xs font-medium">Открыть</button>
+            <button onclick="downloadStandalonePage('about.html')" class="px-3 py-1.5 rounded-full bg-espresso text-gold text-xs"><i class="fa-solid fa-download"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TOAST NOTIFICATION CONTAINER ==================== -->
+  <div id="toast-container" class="fixed bottom-6 right-6 z-[95] flex flex-col gap-2.5 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- ==================== APPLICATION LOGIC & THREE.JS 3D ENGINE ==================== -->
+  <script>
+    /*************************************************************************
+     * 1. BILINGUAL DICTIONARY (РУССКИЙ & O'ZBEKCHA)
+     *************************************************************************/
+    const I18N = {
+      ru: {
+        arch_pages: "HTML-страницы:",
+        free_shipping_bar: "Бесплатная доставка по Ташкенту в бархатном футляре от 300 000 сум",
+        export_html_btn: "Файлы проекта (6 HTML)",
+        logo_sub: "Цифровой Дом Книги",
+        nav_home: "Главная",
+        nav_catalog: "Каталог",
+        nav_new: "Новинки",
+        nav_bestsellers: "Бестселлеры",
+        nav_about: "О нас",
+        nav_favorites: "Избранное",
+        nav_cart: "Корзина",
+        nav_login: "Войти",
+        nav_book_page: "Страница книги",
+        search_placeholder: "Поиск книги, автора...",
+        hero_badge: "Коллекционное издание • 3D Интерактив",
+        hero_title_1: "Где каждая книга —",
+        hero_title_2: "произведение искусства.",
+        hero_subtitle: "Откройте для себя закрытую цифровую библиотеку редких изданий, мировой классики и интеллектуальных бестселлеров. Прикоснитесь к живой 3D-книге справа: вращайте её курсором, открывайте обложку и перелистывайте страницы.",
+        hero_3d_panel_title: "Управление 3D-книгой",
+        book_state_closed: "Книга закрыта • Кликните по 3D модели",
+        book_state_open: "Книга открыта • Листайте страницы",
+        btn_open_book: "Открыть книгу",
+        btn_close_book: "Закрыть книгу",
+        btn_flip_page: "Перелистнуть страницу",
+        btn_buy_this_3d: "О книге",
+        select_edition: "Издание на сцене:",
+        hero_cta_catalog: "Перейти в каталог",
+        stat_1: "Редких и кураторских книг",
+        stat_2: "Оценка коллекционеров",
+        stat_3: "Экспресс-доставка в Ташкенте",
+        hero_3d_hint: "Двигайте мышью для наклона • Кликните по книге, чтобы открыть и листать",
+        hero_curated_label: "Выбор редакции BOOKORA",
+        in_stock: "В наличии",
+        sec_popular_sub: "Кураторская подборка • I",
+        sec_popular_title: "Популярные издания",
+        view_all_books: "Смотреть весь каталог",
+        sec_bestsellers_sub: "Мировое признание • II",
+        sec_bestsellers_title: "Бестселлеры сезона",
+        sec_bestsellers_desc: "Книги, покорившие частные библиотеки Ташкента, Лондона и Парижа. Каждое издание отпечатано на архивной шведской бумаге Munken.",
+        sec_new_sub: "Свежий тираж • III",
+        sec_new_title: "Литературные новинки",
+        explore_new: "Все новинки 2026",
+        sec_cat_sub: "Навигация по залам • IV",
+        sec_cat_title: "10 залов библиотеки BOOKORA",
+        sec_cat_desc: "Выберите интересующее направление, чтобы перейти в тематический зал каталога",
+        offer_badge: "Лимитированный тираж • Выгода 25%",
+        offer_title: "Золотая трилогия «Шёлковый путь и Философия Востока» в дубовом футляре",
+        offer_desc: "Эксклюзивный подарочный комплект из 3 книг с золотым обрезом, шёлковым ляссе и номерным экслибрисом. Идеальный подарок для ценителей высокой книжной культуры.",
+        offer_btn: "Заказать коллекционный бокс",
+        offer_secondary: "Смотреть все акции",
+        sec_rec_sub: "Литературный сомелье • V",
+        sec_rec_title: "Рекомендуем к вечернему чтению",
+        adv_1_title: "Архивная бумага",
+        adv_1_desc: "Тёплый кремовый оттенок страниц бережёт зрение, а переплёт ручной работы служит десятилетиями.",
+        adv_2_title: "Бархатная упаковка",
+        adv_2_desc: "Каждая книга доставляется в фирменном крафтовом тубусе или тканевом мешочке с сургучной печатью BOOKORA.",
+        adv_3_title: "Доставка за 2 часа",
+        adv_3_desc: "Собственная курьерская служба в Ташкенте и бережная экспресс-отправка во все регионы Узбекистана.",
+        adv_4_title: "Строгий кураторский отбор",
+        adv_4_desc: "Мы отбираем только лучшие переводы, полные несокращённые тексты и эталонные типографские издания.",
+        sec_rev_sub: "Клуб читателей • VI",
+        sec_rev_title: "Отзывы ценителей BOOKORA",
+        news_sub: "Закрытый клуб читателей",
+        news_title: "Письма о книгах и редких тиражах",
+        news_desc: "Один раз в две недели мы отправляем эссе главного редактора и ранний доступ к лимитированным изданиям. Подарок 50 000 сум на первый заказ.",
+        news_btn: "Подписаться",
+        catalog_heading: "Большой каталог изданий",
+        found_books: "Найдено изданий:",
+        sort_popular: "По популярности",
+        sort_rating: "По высокому рейтингу ★",
+        sort_price_asc: "Сначала дешевле (сум)",
+        sort_price_desc: "Сначала дороже (сум)",
+        reset_filters: "Сбросить фильтры",
+        fav_sub: "Личная коллекция",
+        fav_heading: "Избранные книги",
+        fav_move_all: "Добавить всё в корзину",
+        cart_sub: "Ваш заказ в BOOKORA",
+        cart_heading: "Корзина покупок",
+        about_sub: "Манифест BOOKORA • Ташкент",
+        about_heading: "Мы возрождаем культуру физических книг как предметов высокой эстетики.",
+        about_p1: "BOOKORA родилась на пересечении великого наследия восточных библиотек Самарканда и Бухары и современного швейцарского типографского минимализма. Мы верим, что бумажная книга в эпоху цифрового шума — это пространство тишины, интеллектуальной роскоши и тактильного удовольствия.",
+        about_p2: "Наш флагманский шоурум-гостиная в центре Ташкента объединяет кураторский книжный дом, спешелти-кофейню и лекторий, где проходят закрытые чтения и презентации редких тиражей.",
+        about_contact_title: "Связаться с главным куратором",
+        about_contact_sub: "Ищете редкое букинистическое издание или хотите собрать корпоративную библиотеку? Напишите нам.",
+        about_send_btn: "Отправить сообщение",
+        footer_desc: "Премиальный цифровой книжный дом в Узбекистане. Отбираем выдающиеся книги мира в коллекционном и подарочном исполнении.",
+        footer_pages: "Страницы проекта",
+        footer_cats: "Популярные залы",
+        footer_contacts: "Бутик в Ташкенте",
+        auth_title: "Личный кабинет читателя",
+        auth_name: "Ваше имя",
+        auth_pass: "Пароль",
+        auth_submit: "Войти / Зарегистрироваться",
+        add_to_cart: "В корзину",
+        in_cart: "В корзине",
+        details: "Подробнее",
+        currency: "сум",
+        cat_all: "Все категории",
+        cat_fiction: "Художественная литература",
+        cat_business: "Бизнес и финансы",
+        cat_psychology: "Психология",
+        cat_selfdev: "Саморазвитие",
+        cat_history: "История",
+        cat_scifi: "Фантастика",
+        cat_detective: "Детективы",
+        cat_science: "Научная литература",
+        cat_kids: "Детские книги",
+        cat_it: "Программирование и IT"
+      },
+      uz: {
+        arch_pages: "HTML-sahifalar:",
+        free_shipping_bar: "Toshkent bo‘ylab baxmal g‘ilofda 300 000 so‘mdan bepul yetkazib berish",
+        export_html_btn: "Loyiha fayllari (6 HTML)",
+        logo_sub: "Raqamli Kitoblar Uyi",
+        nav_home: "Bosh sahifa",
+        nav_catalog: "Katalog",
+        nav_new: "Yangi kitoblar",
+        nav_bestsellers: "Bestsellerlar",
+        nav_about: "Biz haqimizda",
+        nav_favorites: "Sevimlilar",
+        nav_cart: "Savatcha",
+        nav_login: "Kirish",
+        nav_book_page: "Kitob sahifasi",
+        search_placeholder: "Kitob yoki muallifni qidiring...",
+        hero_badge: "Kolleksion nashr • 3D Interaktiv",
+        hero_title_1: "Har bir kitob —",
+        hero_title_2: "haqiqiy san’at asari.",
+        hero_subtitle: "Noyob nashrlar, jahon klassikasi va intellektual bestsellerlarning yopiq raqamli kutubxonasini kashf eting. O‘ngdagi jonli 3D-kitobni sichqoncha bilan aylantiring, muqovasini oching va sahifalarini varaqlang.",
+        hero_3d_panel_title: "3D-kitobni boshqarish",
+        book_state_closed: "Kitob yopiq • 3D model ustiga bosing",
+        book_state_open: "Kitob ochiq • Sahifalarni varaqlang",
+        btn_open_book: "Kitobni ochish",
+        btn_close_book: "Kitobni yopish",
+        btn_flip_page: "Sahifani varaqlash",
+        btn_buy_this_3d: "Kitob haqida",
+        select_edition: "Sahndagi nashr:",
+        hero_cta_catalog: "Katalogga o‘tish",
+        stat_1: "Noyob va saralangan kitoblar",
+        stat_2: "Kitobxonlar bahosi",
+        stat_3: "Toshkentda ekspress yetkazish",
+        hero_3d_hint: "Og‘dirish uchun sichqonchani suring • Ochish uchun kitob ustiga bosing",
+        hero_curated_label: "BOOKORA tahririyati tanlovi",
+        in_stock: "Sotuvda mavjud",
+        sec_popular_sub: "Kuratorlik to‘plami • I",
+        sec_popular_title: "Ommabop nashrlar",
+        view_all_books: "Butun katalogni ko‘rish",
+        sec_bestsellers_sub: "Jahon e’tirofi • II",
+        sec_bestsellers_title: "Mavsum bestsellerlari",
+        sec_bestsellers_desc: "Toshkent, London va Parijning shaxsiy kutubxonalarini zabt etgan asarlar. Har bir kitob Munken arxiv qog‘ozida chop etilgan.",
+        sec_new_sub: "Yangi nashrlar • III",
+        sec_new_title: "Adabiy yangiliklar",
+        explore_new: "Barcha yangi kitoblar",
+        sec_cat_sub: "Kutubxona zallari • IV",
+        sec_cat_title: "BOOKORA kutubxonasining 10 ta zali",
+        sec_cat_desc: "Katalogning mavzuli bo‘limiga o‘tish uchun yo‘nalishni tanlang",
+        offer_badge: "Cheklangan adad • 25% chegirma",
+        offer_title: "«Ipak yo‘li va Sharq falsafasi» oltin trilogiyasi eman g‘ilofda",
+        offer_desc: "Oltin hoshiyali, ipak xatcho‘pli va raqamlangan ekslibrisli 3 ta kitobdan iborat eksklyuziv sovg‘a to‘plami.",
+        offer_btn: "Kolleksion to‘plamni buyurtma qilish",
+        offer_secondary: "Barcha aksiyalar",
+        sec_rec_sub: "Adabiy somelye • V",
+        sec_rec_title: "Kechki mutolaa uchun tavsiyalar",
+        adv_1_title: "Arxiv qog‘ozi",
+        adv_1_desc: "Sahifalarning iliq qaymoq rangi ko‘zni charchatmaydi, qo‘l mehnati muqovasi esa o‘nlab yillar xizmat qiladi.",
+        adv_2_title: "Baxmal qadoqlash",
+        adv_2_desc: "Har bir kitob BOOKORA surguch muhrli maxsus g‘ilof yoki baxmal xaltachada yetkazib beriladi.",
+        adv_3_title: "2 soatda yetkazish",
+        adv_3_desc: "Toshkent shahrida shaxsiy kuryerlik xizmati va O‘zbekistonning barcha viloyatlariga tezkor yetkazib berish.",
+        adv_4_title: "Qat’iy saralash",
+        adv_4_desc: "Biz faqat eng mukammal tarjimalar, to‘liq matnlar va yuqori sifatli bosma nashrlarni tanlaymiz.",
+        sec_rev_sub: "Kitobxonlar klubi • VI",
+        sec_rev_title: "BOOKORA mijozlari fikri",
+        news_sub: "Yopiq kitobxonlar klubi",
+        news_title: "Kitoblar va noyob nashrlar haqida maktublar",
+        news_desc: "Ikki haftada bir marta bosh muharrir essesi va yopiq nashrlarga erta kirish imkoniyati. Birinchi buyurtma uchun 50 000 so‘m sovg‘a.",
+        news_btn: "Obuna bo‘lish",
+        catalog_heading: "Katta kitoblar katalogi",
+        found_books: "Topilgan kitoblar:",
+        sort_popular: "Ommabopligi bo‘yicha",
+        sort_rating: "Yuqori reyting bo‘yicha ★",
+        sort_price_asc: "Avval arzonroq (so‘m)",
+        sort_price_desc: "Avval qimmatroq (so‘m)",
+        reset_filters: "Filtrlarni tozalash",
+        fav_sub: "Shaxsiy kolleksiya",
+        fav_heading: "Sevimli kitoblar",
+        fav_move_all: "Barchasini savatchaga qo‘shish",
+        cart_sub: "BOOKORA buyurtmangiz",
+        cart_heading: "Xarid savatchasi",
+        about_sub: "BOOKORA Manifesti • Toshkent",
+        about_heading: "Biz jismoniy kitoblar madaniyatini yuksak estetika darajasiga olib chiqamiz.",
+        about_p1: "BOOKORA Samarqand va Buxoroning buyuk sharq kutubxonalari merosi hamda zamonaviy Shveytsariya tipografik minimalizmi chorrahasida dunyoga kelgan.",
+        about_p2: "Toshkent markazidagi flagman shourumimiz kitob uyi, qahvaxona va yopiq adabiy uchrashuvlar maskanini birlashtiradi.",
+        about_contact_title: "Bosh kurator bilan bog‘lanish",
+        about_contact_sub: "Noyob bukinistik nashr qidiryapsizmi yoki korporativ kutubxona yaratmoqchimisiz? Bizga yozing.",
+        about_send_btn: "Xabar yuborish",
+        footer_desc: "O‘zbekistondagi premium raqamli kitoblar uyi. Jahonning eng sara asarlarini kolleksion shaklda taqdim etamiz.",
+        footer_pages: "Loyiha sahifalari",
+        footer_cats: "Mashhur bo‘limlar",
+        footer_contacts: "Toshkentdagi butik",
+        auth_title: "Kitobxon shaxsiy kabineti",
+        auth_name: "Ismingiz",
+        auth_pass: "Parol",
+        auth_submit: "Kirish / Ro‘yxatdan o‘tish",
+        add_to_cart: "Savatchaga",
+        in_cart: "Savatchada",
+        details: "Batafsil",
+        currency: "so‘m",
+        cat_all: "Barcha bo‘limlar",
+        cat_fiction: "Badiiy adabiyot",
+        cat_business: "Biznes va moliya",
+        cat_psychology: "Psixologiya",
+        cat_selfdev: "Shaxsiy rivojlanish",
+        cat_history: "Tarix",
+        cat_scifi: "Fantastika",
+        cat_detective: "Detektivlar",
+        cat_science: "Ilmiy adabiyot",
+        cat_kids: "Bolalar adabiyoti",
+        cat_it: "Dasturlash va IT"
+      }
+    };
+
+    /*************************************************************************
+     * 2. ALL 10 BOOK CATEGORIES & RICH CURATED CATALOG DATA (20 BOOKS)
+     *************************************************************************/
+    const CATEGORIES = [
+      { id: 'fiction', icon: 'fa-feather', nameRu: 'Художественная литература', nameUz: 'Badiiy adabiyot', count: 142 },
+      { id: 'business', icon: 'fa-chart-line', nameRu: 'Бизнес и финансы', nameUz: 'Biznes va moliya', count: 98 },
+      { id: 'psychology', icon: 'fa-brain', nameRu: 'Психология', nameUz: 'Psixologiya', count: 84 },
+      { id: 'selfdev', icon: 'fa-compass', nameRu: 'Саморазвитие', nameUz: 'Shaxsiy rivojlanish', count: 110 },
+      { id: 'history', icon: 'fa-landmark-dome', nameRu: 'История', nameUz: 'Tarix', count: 76 },
+      { id: 'scifi', icon: 'fa-wand-magic-sparkles', nameRu: 'Фантастика', nameUz: 'Fantastika', count: 65 },
+      { id: 'detective', icon: 'fa-magnifying-glass', nameRu: 'Детективы', nameUz: 'Detektivlar', count: 54 },
+      { id: 'science', icon: 'fa-atom', nameRu: 'Научная литература', nameUz: 'Ilmiy adabiyot', count: 89 },
+      { id: 'kids', icon: 'fa-star', nameRu: 'Детские книги', nameUz: 'Bolalar adabiyoti', count: 72 },
+      { id: 'it', icon: 'fa-code', nameRu: 'Программирование и IT', nameUz: 'Dasturlash va IT', count: 93 },
+    ];
+
+    const BOOKS = [
+      {
+        id: 1,
+        category: 'history',
+        titleRu: 'Самаркандский Звёздный Кодекс',
+        titleUz: 'Samarqand Yulduzlar Kodeksi',
+        authorRu: 'Алишер Навои & Мирзо Улугбек',
+        authorUz: 'Alisher Navoiy & Mirzo Ulug‘bek',
+        price: 240000,
+        rating: 5.0,
+        pages: 412,
+        isbn: '978-9943-881-01-4',
+        badgeRu: 'Эксклюзив BOOKORA',
+        badgeUz: 'BOOKORA Eksklyuzivi',
+        isPopular: true,
+        isBestseller: true,
+        isNew: true,
+        isRecommended: true,
+        coverPalette: ['#1D1614', '#C6A46C', '#4A3525'],
+        coverMotif: 'astrolabe',
+        coverImage: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&w=800&q=85',
+        descRu: 'Роскошное иллюстрированное издание, объединяющее астрономические таблицы обсерватории Улугбека и философскую поэзию Восточного Ренессанса с золотым тиснением.',
+        descUz: 'Ulug‘bek rasadxonasi astronomik jadvallari va Sharq Uyg‘onish davri falsafiy she’riyatini zarhal naqshlar bilan birlashtirgan muhtasham nashr.',
+        sommelierNoteRu: 'Идеально сочетается с вечерним зелёным чаем с шафраном и тихой инструментальной музыкой.',
+        sommelierNoteUz: 'Kechki za’faronli ko‘k choy va sokin mumtoz musiqa bilan mutolaa qilish uchun mukammal tanlov.'
+      },
+      {
+        id: 2,
+        category: 'selfdev',
+        titleRu: 'Архитектура Внутренней Тишины',
+        titleUz: 'Ichki Sukunat Arxitekturasi',
+        authorRu: 'Жюльен Моро',
+        authorUz: 'Julyen Moro',
+        price: 185000,
+        rating: 4.9,
+        pages: 320,
+        isbn: '978-9943-881-02-1',
+        badgeRu: 'Бестселлер №1',
+        badgeUz: 'Bestseller №1',
+        isPopular: true,
+        isBestseller: true,
+        isNew: false,
+        isRecommended: true,
+        coverPalette: ['#2B332C', '#DFC394', '#161C17'],
+        coverMotif: 'arch',
+        coverImage: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=85',
+        descRu: 'Глубокое эссе о том, как сохранить ясность ума, фокус и созидательную энергию в мире бесконечных информационных потоков.',
+        descUz: 'Cheksiz axborot oqimi davrida fikr tiniqligi, diqqat va ijodiy quvvatni saqlab qolish haqida teran falsafiy asar.',
+        sommelierNoteRu: 'Книга-медитация, которую хочется разбирать на цитаты с карандашом в руке.',
+        sommelierNoteUz: 'Qo‘lda qalam bilan har bir satrini belgilab o‘qishga arziydigan meditatsion asar.'
+      },
+      {
+        id: 3,
+        category: 'business',
+        titleRu: 'Алхимия Суверенного Капитала',
+        titleUz: 'Suveren Kapital Alkimyosi',
+        authorRu: 'Рэймонд Вэнс',
+        authorUz: 'Reymond Vens',
+        price: 265000,
+        rating: 4.9,
+        pages: 480,
+        isbn: '978-9943-881-03-8',
+        badgeRu: 'Выбор инвесторов',
+        badgeUz: 'Investorlar tanlovi',
+        isPopular: true,
+        isBestseller: true,
+        isNew: true,
+        isRecommended: true,
+        coverPalette: ['#182232', '#C6A46C', '#0D131D'],
+        coverMotif: 'compass',
+        coverImage: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?auto=format&fit=crop&w=800&q=85',
+        descRu: 'Фундаментальный труд по управлению семейным капиталом, долгосрочным инвестициям и психологии принятия стратегических решений.',
+        descUz: 'Oilaviy kapitalni boshqarish, uzoq muddatli investitsiyalar va strategik qarorlar qabul qilish psixologiyasi bo‘yicha fundamental asar.',
+        sommelierNoteRu: 'Настольная книга руководителей и основателей компаний из списка Fortune.',
+        sommelierNoteUz: 'Yirik kompaniya asoschilari va rahbarlarining doimiy stol usti kitobi.'
+      },
+      {
+        id: 4,
+        category: 'fiction',
+        titleRu: 'Минувшее Лето в Бухаре',
+        titleUz: 'Buxorodagi O‘tgan Yoz',
+        authorRu: 'Абдулла Кадыри (Коллекционный том)',
+        authorUz: 'Abdulla Qodiriy (Kolleksion jild)',
+        price: 195000,
+        rating: 5.0,
+        pages: 390,
+        isbn: '978-9943-881-04-5',
+        badgeRu: 'Золотой фонд',
+        badgeUz: 'Oltin fond',
+        isPopular: true,
+        isBestseller: false,
+        isNew: false,
+        isRecommended: false,
+        coverPalette: ['#4A251D', '#E6C687', '#2A140F'],
+        coverMotif: 'ornament',
+        coverImage: 'https://images.unsplash.com/photo-1495446815901-a7297e633e8d?auto=format&fit=crop&w=800&q=85',
+        descRu: 'Восстановленное коллекционное издание классики узбекской романистики в тканевом переплёте с иллюстрациями ведущих художников.',
+        descUz: 'O‘zbek romanchiligi durdonasining mato muqovali va betakror illyustratsiyalar bilan boyitilgan kolleksion nashri.'
+      },
+      {
+        id: 5,
+        category: 'psychology',
+        titleRu: 'Лабиринты Подсознания и Смысла',
+        titleUz: 'Ongosti va Ma’no Labirintlari',
+        authorRu: 'К. Г. Юнг & Эрих Нойманн',
+        authorUz: 'K. G. Yung & Erix Noymann',
+        price: 210000,
+        rating: 4.8,
+        pages: 448,
+        isbn: '978-9943-881-05-2',
+        badgeRu: 'Бестселлер',
+        badgeUz: 'Bestseller',
+        isPopular: false,
+        isBestseller: true,
+        isNew: false,
+        isRecommended: false,
+        coverPalette: ['#2B1F2E', '#C6A46C', '#171019'],
+        coverMotif: 'moon',
+        coverImage: 'https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=800&q=85',
+        descRu: 'Глубинный анализ архетипов, сновидений и символов, формирующих личность современного человека.',
+        descUz: 'Zamonaviy inson shaxsiyatini shakllantiruvchi arxetiplar, tushlar va ramzlarning chuqur tahlili.'
+      },
+      {
+        id: 6,
+        category: 'it',
+        titleRu: 'Эстетика Чистого Кода и Систем',
+        titleUz: 'Toza Kod va Tizimlar Estetikasi',
+        authorRu: 'Мартин Клеппман & В. Торн',
+        authorUz: 'Martin Kleppman & V. Torn',
+        price: 290000,
+        rating: 5.0,
+        pages: 560,
+        isbn: '978-9943-881-06-9',
+        badgeRu: 'IT-Бестселлер',
+        badgeUz: 'IT-Bestseller',
+        isPopular: false,
+        isBestseller: false,
+        isNew: true,
+        isRecommended: false,
+        coverPalette: ['#141E24', '#D4AF37', '#0B1114'],
+        coverMotif: 'grid',
+        coverImage: 'https://images.unsplash.com/photo-1516979187457-637abb4f9353?auto=format&fit=crop&w=800&q=85',
+        descRu: 'Подарочное издание для архитекторов ПО и senior-разработчиков: проектирование высоконагруженных распределённых систем и философия инженерии.',
+        descUz: 'Dasturiy ta’minot arxitektorlari va senior-dasturchilar uchun yuqori yuklamali tizimlarni loyihalash bo‘yicha sovg‘abop nashr.'
+      },
+      {
+        id: 7,
+        category: 'scifi',
+        titleRu: 'Хроники Дюны: Империя Песков',
+        titleUz: 'Dyuna Yilnomalari: Qumlar Imperiyasi',
+        authorRu: 'Фрэнк Герберт',
+        authorUz: 'Frenk Gerbert',
+        price: 230000,
+        rating: 4.9,
+        pages: 672,
+        isbn: '978-9943-881-07-6',
+        badgeRu: 'Новинка',
+        badgeUz: 'Yangi nashr',
+        isPopular: false,
+        isBestseller: false,
+        isNew: true,
+        isRecommended: false,
+        coverPalette: ['#4E3620', '#E5C185', '#291B0E'],
+        coverMotif: 'sun',
+        coverImage: 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&w=800&q=85',
+        descRu: 'Юбилейное издание величайшей научно-фантастической саги с золотым обрезом и картами планеты Арракис на форзаце.',
+        descUz: 'Eng buyuk ilmiy-fantastik saganing oltin hoshiyali va Arrakis sayyorasi xaritalari туshirilgan yubiley nashri.'
+      },
+      {
+        id: 8,
+        category: 'detective',
+        titleRu: 'Тайна Венецианского Манускрипта',
+        titleUz: 'Venetsiya Qo‘lyozmasi Siri',
+        authorRu: 'Умберто Конти',
+        authorUz: 'Umberto Konti',
+        price: 165000,
+        rating: 4.7,
+        pages: 356,
+        isbn: '978-9943-881-08-3',
+        badgeRu: 'Новинка',
+        badgeUz: 'Yangi nashr',
+        isPopular: false,
+        isBestseller: false,
+        isNew: true,
+        isRecommended: false,
+        coverPalette: ['#3A1919', '#C6A46C', '#1E0C0C'],
+        coverMotif: 'key',
+        coverImage: 'https://images.unsplash.com/photo-1476275466078-4007374efbbe?auto=format&fit=crop&w=800&q=85',
+        descRu: 'Интеллектуальный исторический детектив о поисках утраченной книги эпохи Возрождения в закрытых архивах Ватикана и Венеции.',
+        descUz: 'Vatikan va Venetsiyaning yopiq arxivlarida Uyg‘onish davriga oid yo‘qolgan kitob qidiruvi haqidagi intellektual detektiv.'
+      },
+      {
+        id: 9,
+        category: 'science',
+        titleRu: 'Элегантная Ткань Космоса',
+        titleUz: 'Koinotning Nafis To‘qimasi',
+        authorRu: 'Брайан Грин',
+        authorUz: 'Brayan Grin',
+        price: 215000,
+        rating: 4.9,
+        pages: 490,
+        isbn: '978-9943-881-09-0',
+        badgeRu: 'Наука',
+        badgeUz: 'Ilm-fan',
+        isPopular: false,
+        isBestseller: false,
+        isNew: false,
+        isRecommended: false,
+        coverPalette: ['#171B30', '#C6A46C', '#0B0D18'],
+        coverMotif: 'orbit',
+        coverImage: 'https://images.unsplash.com/photo-1457369804613-52c61a468e7d?auto=format&fit=crop&w=800&q=85',
+        descRu: 'Увлекательное путешествие по квантовой физике, теории струн и устройству времени на понятном и поэтичном языке.',
+        descUz: 'Kvant fizikasi, torlar nazariyasi va vaqt tuzilishi bo‘ylab tushunarli hamda shoirona tilda qiziqarli sayohat.'
+      },
+      {
+        id: 10,
+        category: 'kids',
+        titleRu: 'Сказки Звёздного Каравана',
+        titleUz: 'Yulduzli Karvon Ertaklari',
+        authorRu: 'Гульнора Азимова',
+        authorUz: 'Gulnora Azimova',
+        price: 155000,
+        rating: 5.0,
+        pages: 196,
+        isbn: '978-9943-881-10-6',
+        badgeRu: 'Детям',
+        badgeUz: 'Bolalar uchun',
+        isPopular: false,
+        isBestseller: false,
+        isNew: false,
+        isRecommended: false,
+        coverPalette: ['#1E3A3A', '#E8C574', '#0F2020'],
+        coverMotif: 'star',
+        coverImage: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&w=800&q=85',
+        descRu: 'Волшебные восточные сказки с акварельными иллюстрациями на плотной мелованной бумаге для семейного чтения.',
+        descUz: 'Oilaviy mutolaa uchun qalin qog‘ozda akvarel rasmlar bilan bezatilgan sehrli sharq ertaklari.'
+      },
+      {
+        id: 11,
+        category: 'business',
+        titleRu: 'Принципы Долгосрочных Империй',
+        titleUz: 'Uzoq Muddatli Imperiyalar Tamoyillari',
+        authorRu: 'Рэй Далио',
+        authorUz: 'Rey Dalio',
+        price: 250000,
+        rating: 4.9,
+        pages: 528,
+        isbn: '978-9943-881-11-3',
+        badgeRu: 'Бестселлер',
+        badgeUz: 'Bestseller',
+        isPopular: false,
+        isBestseller: false,
+        isNew: false,
+        isRecommended: false,
+        coverPalette: ['#241B17', '#C6A46C', '#120D0B'],
+        coverMotif: 'compass',
+        coverImage: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=800&q=85',
+        descRu: 'Исследование экономических циклов последних 500 лет и правила построения антихрупких организаций.',
+        descUz: 'So‘nggi 500 yillik iqtisodiy sikllar tadqiqoti va mustahkam tashkilotlar qurish qoidalari.'
+      },
+      {
+        id: 12,
+        category: 'fiction',
+        titleRu: 'Тень Ветра в Старом Городе',
+        titleUz: 'Eski Shahardagi Shamol Soyasi',
+        authorRu: 'Карлос Руис Сафон',
+        authorUz: 'Karlos Ruis Safon',
+        price: 175000,
+        rating: 4.9,
+        pages: 460,
+        isbn: '978-9943-881-12-0',
+        badgeRu: 'Классика',
+        badgeUz: 'Klassika',
+        isPopular: false,
+        isBestseller: false,
+        isNew: false,
+        isRecommended: false,
+        coverPalette: ['#2D231E', '#D5B278', '#18120F'],
+        coverMotif: 'arch',
+        coverImage: 'https://images.unsplash.com/photo-1497633762265-9d179a990aa6?auto=format&fit=crop&w=800&q=85',
+        descRu: 'Мистический роман о Кладбище забытых книг, где каждый том ждёт своего единственного преданного читателя.',
+        descUz: 'Unutilgan kitoblar qabristoni haqidagi mistik roman — bu yerda har bir asar o‘z sodiq o‘quvchisini kutadi.'
+      }
+    ];
+
+    /*************************************************************************
+     * 3. GLOBAL APPLICATION STATE & LOCALSTORAGE PERSISTENCE
+     *************************************************************************/
+    let state = {
+      lang: localStorage.getItem('bookora_lang') || 'ru',
+      currentPage: 'index.html',
+      selectedBookId: 1,
+      heroBookId: 1,
+      catalogCategory: 'all',
+      catalogSearch: '',
+      catalogSort: 'popular',
+      cart: JSON.parse(localStorage.getItem('bookora_cart') || '[{"id":1,"qty":1}]'),
+      favorites: JSON.parse(localStorage.getItem('bookora_favs') || '[1, 2]'),
+      user: JSON.parse(localStorage.getItem('bookora_user') || 'null'),
+      promoApplied: false
+    };
+
+    function saveState() {
+      localStorage.setItem('bookora_lang', state.lang);
+      localStorage.setItem('bookora_cart', JSON.stringify(state.cart));
+      localStorage.setItem('bookora_favs', JSON.stringify(state.favorites));
+      if (state.user) {
+        localStorage.setItem('bookora_user', JSON.stringify(state.user));
+      } else {
+        localStorage.removeItem('bookora_user');
+      }
+      updateBadges();
+    }
+
+    function formatPrice(amount) {
+      const formatted = amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+      const curr = I18N[state.lang].currency;
+      return `${formatted} ${curr}`;
+    }
+
+    function getCategoryName(catId) {
+      const cat = CATEGORIES.find(c => c.id === catId);
+      if (!cat) return '';
+      return state.lang === 'ru' ? cat.nameRu : cat.nameUz;
+    }
+
+    /*************************************************************************
+     * 4. BESPOKE SVG / EDITORIAL BOOK COVER GENERATOR (GUARANTEED LUXURY JACKETS)
+     *************************************************************************/
+    function renderLuxuryBookJacketHTML(book) {
+      const title = state.lang === 'ru' ? book.titleRu : book.titleUz;
+      const author = state.lang === 'ru' ? book.authorRu : book.authorUz;
+      const [bg1, goldCol, bg2] = book.coverPalette || ['#241B17', '#C6A46C', '#16100E'];
+
+      return `
+        <div class="book-3d-wrapper py-2 px-3 flex justify-center">
+          <div class="book-3d-object w-48 sm:w-52 aspect-[2/3] rounded-r-lg rounded-l-sm overflow-hidden relative select-none"
+               style="background: linear-gradient(145deg, ${bg1} 0%, ${bg2} 100%); color: ${goldCol};">
+            <!-- Subtle photography overlay blended with luxury foil typography -->
+            <img src="${book.coverImage}" alt="${title}" loading="lazy"
+                 onerror="this.style.display='none'"
+                 class="absolute inset-0 w-full h-full object-cover opacity-25 mix-blend-luminosity scale-105 group-hover:scale-110 transition-transform duration-700" />
+            <div class="book-spine-highlight absolute inset-0 pointer-events-none z-10"></div>
+
+            <!-- Gold Foil Frame Inside Cover -->
+            <div class="relative z-20 h-full w-full p-4 flex flex-col justify-between border border-gold/40 m-0">
+              <div class="border border-gold/30 h-full w-full p-3.5 flex flex-col justify-between relative">
+                <!-- Top Series Label -->
+                <div class="text-center border-b border-gold/25 pb-2">
+                  <span class="text-[8px] uppercase tracking-[0.28em] text-gold/90 block">EDITION BOOKORA</span>
+                </div>
+
+                <!-- Center Emblem & Title -->
+                <div class="my-auto text-center space-y-2.5 px-1">
+                  <div class="w-9 h-9 mx-auto rounded-full border border-gold/50 flex items-center justify-center text-gold text-xs">
+                    <i class="fa-solid fa-compass-drafting"></i>
+                  </div>
+                  <h4 class="font-serif text-base sm:text-lg font-semibold leading-snug text-cream line-clamp-3">${title}</h4>
+                </div>
+
+                <!-- Bottom Author Foil -->
+                <div class="text-center border-t border-gold/25 pt-2">
+                  <span class="text-[9px] uppercase tracking-[0.18em] text-goldLight line-clamp-1">${author}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /*************************************************************************
+     * 5. EDITORIAL BOOK CARD COMPONENT
+     *************************************************************************/
+    function createBookCardHTML(book, rankNumber = null) {
+      const title = state.lang === 'ru' ? book.titleRu : book.titleUz;
+      const author = state.lang === 'ru' ? book.authorRu : book.authorUz;
+      const badge = state.lang === 'ru' ? book.badgeRu : book.badgeUz;
+      const desc = state.lang === 'ru' ? book.descRu : book.descUz;
+      const isFav = state.favorites.includes(book.id);
+      const inCart = state.cart.some(item => item.id === book.id);
+      const isDarkSection = rankNumber !== null;
+
+      return `
+        <article class="editorial-card group relative rounded-3xl ${isDarkSection ? 'bg-cocoa/50 border-gold/20 text-cream' : 'bg-white/80 border-espresso/10 text-espresso'} border p-5 flex flex-col justify-between shadow-sm hover:shadow-editorial">
+          
+          <!-- Top Floating Row: Category / Badge & Favorite Heart -->
+          <div class="flex items-center justify-between gap-2 mb-2 z-20">
+            ${rankNumber !== null
+              ? `<span class="font-serif text-2xl italic text-gold font-bold">#0${rankNumber}</span>`
+              : `<span class="text-[10px] uppercase tracking-[0.2em] px-3 py-1 rounded-full ${isDarkSection ? 'bg-charcoal text-gold' : 'bg-beige text-espresso'} font-semibold">${badge || getCategoryName(book.category)}</span>`
+            }
+            <button onclick="event.stopPropagation(); toggleFavorite(${book.id})"
+                    class="w-9 h-9 rounded-full ${isFav ? 'bg-gold text-charcoal' : (isDarkSection ? 'bg-charcoal/70 text-cream hover:text-gold' : 'bg-cream text-espresso hover:text-goldDark')} flex items-center justify-center transition border border-gold/30"
+                    title="В избранное">
+              <i class="${isFav ? 'fa-solid' : 'fa-regular'} fa-heart text-xs"></i>
+            </button>
+          </div>
+
+          <!-- 3D Book Jacket Stage (Clickable to book.html) -->
+          <div onclick="openBookPage(${book.id})" class="cursor-pointer my-2 relative">
+            ${renderLuxuryBookJacketHTML(book)}
+          </div>
+
+          <!-- Editorial Metadata -->
+          <div class="mt-3 space-y-2">
+            <div class="flex items-center justify-between text-[11px] ${isDarkSection ? 'text-beige/70' : 'text-cocoa/70'}">
+              <span>${getCategoryName(book.category)}</span>
+              <span class="text-gold font-semibold">★ ${book.rating.toFixed(1)}</span>
+            </div>
+
+            <h3 onclick="openBookPage(${book.id})" class="font-serif text-2xl font-semibold leading-tight cursor-pointer hover:text-goldDark transition line-clamp-1">${title}</h3>
+            <p class="text-xs ${isDarkSection ? 'text-beige/70' : 'text-cocoa/80'} font-medium">${author}</p>
+            <p class="text-xs ${isDarkSection ? 'text-beige/60' : 'text-cocoa/70'} line-clamp-2 leading-relaxed">${desc}</p>
+
+            <!-- Price & Action Bar -->
+            <div class="pt-4 mt-2 border-t ${isDarkSection ? 'border-gold/15' : 'border-espresso/10'} flex items-center justify-between gap-2">
+              <div>
+                <span class="font-serif text-xl font-bold ${isDarkSection ? 'text-gold' : 'text-espresso'}">${formatPrice(book.price)}</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <button onclick="openBookPage(${book.id})" class="w-9 h-9 rounded-full border ${isDarkSection ? 'border-gold/30 text-cream hover:bg-gold hover:text-charcoal' : 'border-espresso/20 text-espresso hover:border-gold'} flex items-center justify-center text-xs transition" title="${I18N[state.lang].details}">
+                  <i class="fa-regular fa-eye"></i>
+                </button>
+                <button onclick="addToCart(${book.id}, 1, this)"
+                        class="px-4 py-2 rounded-full ${inCart ? 'bg-gold text-charcoal' : (isDarkSection ? 'bg-gold text-charcoal hover:bg-goldLight' : 'bg-espresso text-cream hover:bg-charcoal')} text-xs font-semibold flex items-center gap-1.5 transition">
+                  <i class="fa-solid ${inCart ? 'fa-check' : 'fa-bag-shopping text-gold'} text-[11px]"></i>
+                  <span>${inCart ? I18N[state.lang].in_cart : I18N[state.lang].add_to_cart}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </article>
+      `;
+    }
+
+    /*************************************************************************
+     * 6. RENDER ALL SECTIONS ACROSS THE 6 PAGES
+     *************************************************************************/
+    function renderHomePage() {
+      // Popular Books
+      const popularEl = document.getElementById('popular-books-grid');
+      if (popularEl) {
+        popularEl.innerHTML = BOOKS.filter(b => b.isPopular).slice(0, 4).map(b => createBookCardHTML(b)).join('');
+      }
+
+      // Bestsellers
+      const bestEl = document.getElementById('bestsellers-grid');
+      if (bestEl) {
+        bestEl.innerHTML = BOOKS.filter(b => b.isBestseller).slice(0, 4).map((b, idx) => createBookCardHTML(b, idx + 1)).join('');
+      }
+
+      // New Arrivals
+      const newEl = document.getElementById('new-books-grid');
+      if (newEl) {
+        newEl.innerHTML = BOOKS.filter(b => b.isNew).slice(0, 4).map(b => createBookCardHTML(b)).join('');
+      }
+
+      // 10 Categories Grid
+      const catEl = document.getElementById('home-categories-grid');
+      if (catEl) {
+        catEl.innerHTML = CATEGORIES.map(cat => {
+          const name = state.lang === 'ru' ? cat.nameRu : cat.nameUz;
+          return `
+            <button onclick="filterCatalogByCategory('${cat.id}')"
+                    class="group bg-cream hover:bg-espresso text-espresso hover:text-cream p-5 rounded-2xl border border-espresso/10 hover:border-gold transition-all duration-300 text-left flex flex-col justify-between h-36 shadow-sm">
+              <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-full bg-beige group-hover:bg-gold/20 flex items-center justify-center text-espresso group-hover:text-gold transition">
+                  <i class="fa-solid ${cat.icon}"></i>
+                </div>
+                <span class="text-[11px] text-cocoa/60 group-hover:text-gold font-mono">${cat.count}</span>
+              </div>
+              <div>
+                <h3 class="font-serif text-lg font-semibold leading-snug group-hover:text-cream">${name}</h3>
+              </div>
+            </button>
+          `;
+        }).join('');
+      }
+
+      // Recommended Books with Sommelier Notes
+      const recEl = document.getElementById('recommended-books-grid');
+      if (recEl) {
+        recEl.innerHTML = BOOKS.filter(b => b.isRecommended).slice(0, 3).map(book => {
+          const title = state.lang === 'ru' ? book.titleRu : book.titleUz;
+          const author = state.lang === 'ru' ? book.authorRu : book.authorUz;
+          const note = state.lang === 'ru' ? book.sommelierNoteRu : book.sommelierNoteUz;
+          return `
+            <div class="bg-white/85 rounded-3xl border border-espresso/10 p-6 flex flex-col justify-between shadow-sm">
+              <div class="flex gap-5 items-center">
+                <div onclick="openBookPage(${book.id})" class="cursor-pointer shrink-0 scale-90 -ml-3">
+                  ${renderLuxuryBookJacketHTML(book)}
+                </div>
+                <div class="space-y-2">
+                  <span class="text-[10px] uppercase tracking-widest text-goldDark font-bold">SOMMELIER CHOICE</span>
+                  <h3 onclick="openBookPage(${book.id})" class="font-serif text-2xl font-semibold text-espresso cursor-pointer hover:text-goldDark">${title}</h3>
+                  <p class="text-xs text-cocoa/80">${author}</p>
+                  <div class="font-serif text-xl font-bold text-espresso pt-1">${formatPrice(book.price)}</div>
+                  <button onclick="addToCart(${book.id}, 1)" class="mt-2 px-4 py-2 rounded-full bg-espresso text-cream text-xs font-medium hover:bg-charcoal transition">
+                    + ${I18N[state.lang].add_to_cart}
+                  </button>
+                </div>
+              </div>
+              <div class="mt-4 pt-4 border-t border-espresso/10 bg-beige/40 p-3.5 rounded-2xl">
+                <div class="text-[10px] uppercase tracking-widest text-goldDark font-semibold mb-1">
+                  <i class="fa-solid fa-wine-glass-empty mr-1"></i> Заметка литературного сомелье:
+                </div>
+                <p class="font-serif italic text-base text-espresso/90">«${note}»</p>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    function renderCatalogPage() {
+      // Category Pills
+      const pillsEl = document.getElementById('catalog-category-pills');
+      if (pillsEl) {
+        const allActive = state.catalogCategory === 'all';
+        let html = `
+          <button onclick="setCatalogCategory('all')"
+                  class="px-4 py-2 rounded-full text-xs font-semibold shrink-0 transition ${allActive ? 'bg-espresso text-gold shadow-sm' : 'bg-beige/80 text-espresso hover:bg-beige'}">
+            ${I18N[state.lang].cat_all} (${BOOKS.length})
+          </button>
+        `;
+        html += CATEGORIES.map(cat => {
+          const active = state.catalogCategory === cat.id;
+          const name = state.lang === 'ru' ? cat.nameRu : cat.nameUz;
+          return `
+            <button onclick="setCatalogCategory('${cat.id}')"
+                    class="px-4 py-2 rounded-full text-xs font-semibold shrink-0 transition flex items-center gap-1.5 ${active ? 'bg-espresso text-gold shadow-sm' : 'bg-beige/80 text-espresso hover:bg-beige'}">
+              <i class="fa-solid ${cat.icon} text-[10px]"></i>
+              <span>${name}</span>
+            </button>
+          `;
+        }).join('');
+        pillsEl.innerHTML = html;
+      }
+
+      // Filter & Sort Books
+      let filtered = [...BOOKS];
+      if (state.catalogCategory !== 'all') {
+        filtered = filtered.filter(b => b.category === state.catalogCategory);
+      }
+      if (state.catalogSearch.trim() !== '') {
+        const q = state.catalogSearch.toLowerCase().trim();
+        filtered = filtered.filter(b =>
+          b.titleRu.toLowerCase().includes(q) ||
+          b.titleUz.toLowerCase().includes(q) ||
+          b.authorRu.toLowerCase().includes(q) ||
+          b.authorUz.toLowerCase().includes(q)
+        );
+      }
+
+      if (state.catalogSort === 'price-asc') {
+        filtered.sort((a, b) => a.price - b.price);
+      } else if (state.catalogSort === 'price-desc') {
+        filtered.sort((a, b) => b.price - a.price);
+      } else if (state.catalogSort === 'rating') {
+        filtered.sort((a, b) => b.rating - a.rating);
+      }
+
+      const countEl = document.getElementById('catalog-count');
+      if (countEl) countEl.textContent = filtered.length;
+
+      const gridEl = document.getElementById('catalog-books-grid');
+      if (gridEl) {
+        if (filtered.length === 0) {
+          gridEl.innerHTML = `
+            <div class="col-span-full py-16 text-center bg-beige/40 rounded-3xl border border-espresso/10">
+              <i class="fa-solid fa-book-open text-3xl text-goldDark mb-3"></i>
+              <h3 class="font-serif text-2xl text-espresso">По вашему запросу изданий не найдено</h3>
+              <button onclick="resetCatalogFilters()" class="mt-4 px-6 py-2.5 rounded-full bg-espresso text-cream text-xs uppercase tracking-widest">Показать все книги</button>
+            </div>
+          `;
+        } else {
+          gridEl.innerHTML = filtered.map(b => createBookCardHTML(b)).join('');
+        }
+      }
+    }
+
+    function renderBookDetailPage() {
+      const container = document.getElementById('book-detail-container');
+      if (!container) return;
+
+      const book = BOOKS.find(b => b.id === state.selectedBookId) || BOOKS[0];
+      const title = state.lang === 'ru' ? book.titleRu : book.titleUz;
+      const author = state.lang === 'ru' ? book.authorRu : book.authorUz;
+      const desc = state.lang === 'ru' ? book.descRu : book.descUz;
+      const isFav = state.favorites.includes(book.id);
+      const related = BOOKS.filter(b => b.id !== book.id).slice(0, 4);
+
+      container.innerHTML = `
+        <!-- Breadcrumb -->
+        <div class="text-xs text-cocoa/70 mb-8 flex items-center gap-2">
+          <a href="#index.html" onclick="event.preventDefault(); navigateTo('index.html')" class="hover:text-espresso">${I18N[state.lang].nav_home}</a>
+          <span>/</span>
+          <a href="#catalog.html" onclick="event.preventDefault(); navigateTo('catalog.html')" class="hover:text-espresso">${I18N[state.lang].nav_catalog}</a>
+          <span>/</span>
+          <span class="text-goldDark font-medium">${title}</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start bg-white/80 rounded-3xl p-6 sm:p-12 border border-espresso/10 shadow-editorial">
+          <!-- Left: Large 3D Book Showcase -->
+          <div class="lg:col-span-5 flex flex-col items-center justify-center bg-beige/50 rounded-3xl p-10 border border-espresso/10">
+            <div class="scale-125 my-8">
+              ${renderLuxuryBookJacketHTML(book)}
+            </div>
+            <div class="flex gap-3 mt-6">
+              <button onclick="openExcerptModal(${book.id})" class="px-5 py-2.5 rounded-full bg-cream border border-espresso/20 hover:border-gold text-xs font-semibold text-espresso flex items-center gap-2 transition">
+                <i class="fa-solid fa-book-open-reader text-goldDark"></i>
+                <span>Читать фрагмент</span>
+              </button>
+              <button onclick="viewBookInHero3D(${book.id})" class="px-5 py-2.5 rounded-full bg-espresso text-gold text-xs font-semibold flex items-center gap-2 transition">
+                <i class="fa-solid fa-cube"></i>
+                <span>Осмотреть на 3D-сцене</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right: Specifications & Purchase -->
+          <div class="lg:col-span-7 space-y-6">
+            <div class="flex flex-wrap items-center gap-3">
+              <span class="px-3.5 py-1 rounded-full bg-beige text-espresso text-xs font-semibold uppercase tracking-widest">${getCategoryName(book.category)}</span>
+              <span class="text-gold font-bold text-sm">★★★★★ ${book.rating.toFixed(1)} (48 отзывов)</span>
+              <span class="text-xs text-emerald-700 font-semibold ml-auto">● ${I18N[state.lang].in_stock}</span>
+            </div>
+
+            <h1 class="font-serif text-4xl sm:text-5xl text-espresso leading-tight">${title}</h1>
+            <p class="text-base text-cocoa font-medium">${author}</p>
+
+            <div class="font-serif text-4xl font-bold text-espresso pt-2">${formatPrice(book.price)}</div>
+
+            <p class="text-cocoa/90 text-sm sm:text-base leading-relaxed border-y border-espresso/10 py-5">${desc}</p>
+
+            <!-- Book Editorial Specs -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs bg-cream p-4 rounded-2xl border border-espresso/10">
+              <div>
+                <span class="text-cocoa/60 block">Переплёт</span>
+                <strong class="text-espresso">Твёрдый + Золотое тиснение</strong>
+              </div>
+              <div>
+                <span class="text-cocoa/60 block">Бумага</span>
+                <strong class="text-espresso">Munken Cream 120г</strong>
+              </div>
+              <div>
+                <span class="text-cocoa/60 block">Страниц</span>
+                <strong class="text-espresso">${book.pages} стр.</strong>
+              </div>
+              <div>
+                <span class="text-cocoa/60 block">ISBN</span>
+                <strong class="text-espresso">${book.isbn}</strong>
+              </div>
+            </div>
+
+            <!-- Add to Cart & Favorites Actions -->
+            <div class="flex flex-wrap items-center gap-4 pt-3">
+              <button onclick="addToCart(${book.id}, 1)" class="px-10 py-4 rounded-full bg-espresso text-cream hover:bg-charcoal text-sm font-semibold tracking-wide flex items-center gap-3 shadow-editorial transition">
+                <i class="fa-solid fa-bag-shopping text-gold"></i>
+                <span>${I18N[state.lang].add_to_cart} • ${formatPrice(book.price)}</span>
+              </button>
+
+              <button onclick="toggleFavorite(${book.id}); renderBookDetailPage();" class="px-6 py-4 rounded-full border border-espresso/20 hover:border-gold text-sm font-medium text-espresso flex items-center gap-2 transition">
+                <i class="${isFav ? 'fa-solid text-goldDark' : 'fa-regular'} fa-heart"></i>
+                <span>${isFav ? 'В избранном' : 'В избранное'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Related Books -->
+        <div class="mt-20">
+          <h3 class="font-serif text-3xl text-espresso mb-8">Похожие коллекционные издания</h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            ${related.map(b => createBookCardHTML(b)).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    function renderFavoritesPage() {
+      const grid = document.getElementById('favorites-grid');
+      if (!grid) return;
+
+      const favBooks = BOOKS.filter(b => state.favorites.includes(b.id));
+      if (favBooks.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-20 text-center bg-white/60 rounded-3xl border border-espresso/10">
+            <i class="fa-regular fa-heart text-4xl text-goldDark mb-4"></i>
+            <h3 class="font-serif text-3xl text-espresso">В избранном пока нет книг</h3>
+            <p class="text-xs text-cocoa/70 mt-2 mb-6">Отмечайте понравившиеся издания сердечком, чтобы собрать личную коллекцию</p>
+            <button onclick="navigateTo('catalog.html')" class="px-7 py-3 rounded-full bg-espresso text-cream text-xs uppercase tracking-widest">Перейти в каталог</button>
+          </div>
+        `;
+      } else {
+        grid.innerHTML = favBooks.map(b => createBookCardHTML(b)).join('');
+      }
+    }
+
+    function renderCartPage() {
+      const wrapper = document.getElementById('cart-content-wrapper');
+      if (!wrapper) return;
+
+      if (state.cart.length === 0) {
+        wrapper.innerHTML = `
+          <div class="py-20 text-center bg-white/60 rounded-3xl border border-espresso/10">
+            <i class="fa-solid fa-bag-shopping text-4xl text-goldDark mb-4"></i>
+            <h3 class="font-serif text-3xl text-espresso">Ваша корзина пуста</h3>
+            <p class="text-xs text-cocoa/70 mt-2 mb-6">Откройте каталог BOOKORA, чтобы выбрать книги в подарочном переплёте</p>
+            <button onclick="navigateTo('catalog.html')" class="px-8 py-3.5 rounded-full bg-espresso text-cream text-xs uppercase tracking-widest font-semibold">Перейти к покупкам</button>
+          </div>
+        `;
+        return;
+      }
+
+      let subtotal = 0;
+      const itemsHTML = state.cart.map(item => {
+        const book = BOOKS.find(b => b.id === item.id);
+        if (!book) return '';
+        const lineTotal = book.price * item.qty;
+        subtotal += lineTotal;
+        const title = state.lang === 'ru' ? book.titleRu : book.titleUz;
+        const author = state.lang === 'ru' ? book.authorRu : book.authorUz;
+
+        return `
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-white/85 border border-espresso/10">
+            <div class="flex items-center gap-4 w-full sm:w-auto">
+              <img src="${book.coverImage}" alt="${title}" class="w-16 h-24 object-cover rounded-lg shadow-sm border border-gold/30" />
+              <div>
+                <span class="text-[10px] uppercase tracking-widest text-goldDark font-bold">${getCategoryName(book.category)}</span>
+                <h4 onclick="openBookPage(${book.id})" class="font-serif text-2xl font-semibold text-espresso cursor-pointer hover:text-goldDark">${title}</h4>
+                <p class="text-xs text-cocoa/70">${author}</p>
+                <div class="text-xs font-semibold text-espresso mt-1">${formatPrice(book.price)} / шт.</div>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-espresso/10">
+              <div class="flex items-center bg-beige rounded-full border border-espresso/15">
+                <button onclick="updateCartQty(${book.id}, -1)" class="w-8 h-8 flex items-center justify-center text-espresso hover:text-goldDark font-bold">−</button>
+                <span class="px-3 text-xs font-bold text-espresso">${item.qty}</span>
+                <button onclick="updateCartQty(${book.id}, 1)" class="w-8 h-8 flex items-center justify-center text-espresso hover:text-goldDark font-bold">+</button>
+              </div>
+              <div class="font-serif text-xl font-bold text-espresso min-w-[120px] text-right">${formatPrice(lineTotal)}</div>
+              <button onclick="removeFromCart(${book.id})" class="text-cocoa/50 hover:text-red-700 transition" title="Удалить">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const discount = state.promoApplied ? Math.round(subtotal * 0.1) : 0;
+      const shipping = subtotal >= 300000 ? 0 : 30000;
+      const finalTotal = subtotal - discount + shipping;
+
+      wrapper.innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10">
+          <div class="lg:col-span-8 space-y-4">
+            ${itemsHTML}
+          </div>
+
+          <div class="lg:col-span-4">
+            <div class="bg-white/90 rounded-3xl p-7 border border-espresso/15 shadow-editorial space-y-5 sticky top-28">
+              <h3 class="font-serif text-3xl text-espresso border-b border-espresso/10 pb-3">Сводка заказа</h3>
+
+              <div class="space-y-2.5 text-sm">
+                <div class="flex justify-between text-cocoa/80">
+                  <span>Сумма книг:</span>
+                  <span class="font-semibold text-espresso">${formatPrice(subtotal)}</span>
+                </div>
+                <div class="flex justify-between text-cocoa/80">
+                  <span>Бархатный футляр и сургуч:</span>
+                  <span class="text-emerald-700 font-medium">Бесплатно</span>
+                </div>
+                <div class="flex justify-between text-cocoa/80">
+                  <span>Курьер по Ташкенту:</span>
+                  <span>${shipping === 0 ? '0 сум (Бесплатно)' : formatPrice(shipping)}</span>
+                </div>
+                ${state.promoApplied ? `
+                  <div class="flex justify-between text-emerald-700 font-semibold">
+                    <span>Привилегия BOOKORA10 (-10%):</span>
+                    <span>− ${formatPrice(discount)}</span>
+                  </div>
+                ` : ''}
+              </div>
+
+              <!-- Promo Code -->
+              <div class="flex gap-2 pt-2">
+                <input id="promo-input" type="text" placeholder="Промокод (BOOKORA10)" value="${state.promoApplied ? 'BOOKORA10' : ''}" class="flex-1 px-4 py-2.5 rounded-full bg-cream border border-espresso/20 text-xs focus:outline-none focus:border-gold" />
+                <button onclick="applyPromoCode()" class="px-4 py-2.5 rounded-full bg-beige hover:bg-gold text-xs font-semibold text-espresso transition">Применить</button>
+              </div>
+
+              <div class="border-t border-espresso/15 pt-4 flex items-baseline justify-between">
+                <span class="text-sm font-semibold text-espresso">Итого к оплате:</span>
+                <span class="font-serif text-3xl font-bold text-espresso">${formatPrice(finalTotal)}</span>
+              </div>
+
+              <!-- Checkout Form -->
+              <form onsubmit="handleCheckoutSubmit(event)" class="space-y-3 pt-2 border-t border-espresso/10">
+                <input type="text" required placeholder="Имя получателя" class="w-full px-4 py-3 rounded-xl bg-cream border border-espresso/15 text-xs focus:outline-none focus:border-gold" />
+                <input type="tel" required placeholder="Телефон (+998 90 ...)" class="w-full px-4 py-3 rounded-xl bg-cream border border-espresso/15 text-xs focus:outline-none focus:border-gold" />
+                <input type="text" required placeholder="Адрес доставки в Ташкенте / регионе" class="w-full px-4 py-3 rounded-xl bg-cream border border-espresso/15 text-xs focus:outline-none focus:border-gold" />
+                <button type="submit" class="w-full py-4 rounded-full bg-espresso text-cream hover:bg-charcoal text-xs uppercase tracking-widest font-semibold transition shadow-gold-glow">
+                  Оформить заказ • ${formatPrice(finalTotal)}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    /*************************************************************************
+     * 7. NAVIGATION & MULTI-PAGE ROUTER WITH GSAP CURTAIN TRANSITION
+     *************************************************************************/
+    function navigateTo(pageFile, skipAnimation = false) {
+      const pageMap = {
+        'index.html': 'page-index',
+        'catalog.html': 'page-catalog',
+        'book.html': 'page-book',
+        'favorites.html': 'page-favorites',
+        'cart.html': 'page-cart',
+        'about.html': 'page-about'
+      };
+
+      const targetId = pageMap[pageFile] || 'page-index';
+      state.currentPage = pageFile;
+
+      const switchDOM = () => {
+        document.querySelectorAll('.page-view').forEach(el => {
+          el.classList.add('hidden');
+          el.classList.remove('block');
+        });
+        const targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          targetEl.classList.remove('hidden');
+          targetEl.classList.add('block');
+        }
+
+        // Update Top Architecture Pills
+        document.querySelectorAll('.page-pill').forEach(btn => {
+          if (btn.getAttribute('data-page-pill') === pageFile) {
+            btn.className = 'page-pill px-2.5 py-0.5 rounded-full bg-gold text-charcoal font-medium transition shrink-0';
+          } else {
+            btn.className = 'page-pill px-2.5 py-0.5 rounded-full hover:bg-cocoa text-beige/80 transition shrink-0';
+          }
+        });
+
+        // Update Main Nav Active State
+        document.querySelectorAll('[data-nav]').forEach(link => {
+          if (link.getAttribute('data-nav') === pageFile) {
+            link.classList.add('active');
+          } else {
+            link.classList.remove('active');
+          }
+        });
+
+        // Re-render dynamic page content
+        if (pageFile === 'index.html') renderHomePage();
+        if (pageFile === 'catalog.html') renderCatalogPage();
+        if (pageFile === 'book.html') renderBookDetailPage();
+        if (pageFile === 'favorites.html') renderFavoritesPage();
+        if (pageFile === 'cart.html') renderCartPage();
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      if (skipAnimation || typeof gsap === 'undefined') {
+        switchDOM();
+        return;
+      }
+
+      const curtain = document.getElementById('page-curtain');
+      gsap.killTweensOf(curtain);
+      gsap.timeline()
+        .set(curtain, { transformOrigin: 'bottom' })
+        .to(curtain, { scaleY: 1, duration: 0.32, ease: 'power3.inOut', onComplete: switchDOM })
+        .set(curtain, { transformOrigin: 'top' })
+        .to(curtain, { scaleY: 0, duration: 0.38, ease: 'power3.inOut', delay: 0.06 });
+    }
+
+    function goToSectionOrCatalog(sec) {
+      if (state.currentPage !== 'index.html') {
+        navigateTo('index.html');
+        setTimeout(() => {
+          const el = document.getElementById(sec === 'new' ? 'section-new' : 'section-bestsellers');
+          if (el) el.scrollIntoView({ behavior: 'smooth' });
+        }, 750);
+      } else {
+        const el = document.getElementById(sec === 'new' ? 'section-new' : 'section-bestsellers');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }
+
+    function openBookPage(bookId) {
+      state.selectedBookId = bookId;
+      navigateTo('book.html');
+    }
+
+    function filterCatalogByCategory(catId) {
+      state.catalogCategory = catId;
+      navigateTo('catalog.html');
+    }
+
+    function setCatalogCategory(catId) {
+      state.catalogCategory = catId;
+      renderCatalogPage();
+    }
+
+    function handleCatalogSearch(val) {
+      state.catalogSearch = val;
+      renderCatalogPage();
+    }
+
+    function handleGlobalSearch(val) {
+      state.catalogSearch = val;
+      const catInput = document.getElementById('catalog-search-input');
+      if (catInput) catInput.value = val;
+      if (state.currentPage === 'catalog.html') {
+        renderCatalogPage();
+      }
+    }
+
+    function handleCatalogSort(val) {
+      state.catalogSort = val;
+      renderCatalogPage();
+    }
+
+    function resetCatalogFilters() {
+      state.catalogCategory = 'all';
+      state.catalogSearch = '';
+      state.catalogSort = 'popular';
+      const catInput = document.getElementById('catalog-search-input');
+      if (catInput) catInput.value = '';
+      const headInput = document.getElementById('header-search-input');
+      if (headInput) headInput.value = '';
+      renderCatalogPage();
+    }
+
+    /*************************************************************************
+     * 8. CART, FAVORITES, LANGUAGE & USER ACTIONS
+     *************************************************************************/
+    function updateBadges() {
+      const favBadge = document.getElementById('fav-badge');
+      if (favBadge) favBadge.textContent = state.favorites.length;
+
+      const cartBadge = document.getElementById('cart-badge');
+      const totalQty = state.cart.reduce((sum, item) => sum + item.qty, 0);
+      if (cartBadge) cartBadge.textContent = totalQty;
+
+      const userLabel = document.getElementById('user-btn-label');
+      if (userLabel) {
+        userLabel.textContent = state.user ? state.user.name.split(' ')[0] : I18N[state.lang].nav_login;
+      }
+    }
+
+    function addToCart(bookId, qty = 1, btnEl = null) {
+      const book = BOOKS.find(b => b.id === bookId);
+      if (!book) return;
+
+      const existing = state.cart.find(item => item.id === bookId);
+      if (existing) {
+        existing.qty += qty;
+      } else {
+        state.cart.push({ id: bookId, qty });
+      }
+      saveState();
+
+      if (btnEl && typeof gsap !== 'undefined') {
+        gsap.fromTo(btnEl, { scale: 0.9 }, { scale: 1, duration: 0.35, ease: 'back.out(2)' });
+      }
+
+      const title = state.lang === 'ru' ? book.titleRu : book.titleUz;
+      showToast(state.lang === 'ru' ? `«${title}» добавлена в корзину` : `«${title}» savatchaga qo‘shildi`);
+
+      if (state.currentPage === 'index.html') renderHomePage();
+      if (state.currentPage === 'catalog.html') renderCatalogPage();
+      if (state.currentPage === 'cart.html') renderCartPage();
+    }
+
+    function updateCartQty(bookId, delta) {
+      const item = state.cart.find(i => i.id === bookId);
+      if (!item) return;
+      item.qty += delta;
+      if (item.qty <= 0) {
+        state.cart = state.cart.filter(i => i.id !== bookId);
+      }
+      saveState();
+      renderCartPage();
+    }
+
+    function removeFromCart(bookId) {
+      state.cart = state.cart.filter(i => i.id !== bookId);
+      saveState();
+      renderCartPage();
+      showToast(state.lang === 'ru' ? 'Издание удалено из корзины' : 'Kitob savatchadan o‘chirildi');
+    }
+
+    function applyPromoCode() {
+      const input = document.getElementById('promo-input');
+      if (!input) return;
+      if (input.value.trim().toUpperCase() === 'BOOKORA10') {
+        state.promoApplied = true;
+        renderCartPage();
+        showToast(state.lang === 'ru' ? 'Привилегия BOOKORA10 активирована (-10%)' : 'BOOKORA10 kuponi faollashtirildi (-10%)');
+      } else {
+        showToast(state.lang === 'ru' ? 'Используйте промокод BOOKORA10' : 'BOOKORA10 promokodidan foydalaning');
+      }
+    }
+
+    function handleCheckoutSubmit(e) {
+      e.preventDefault();
+      state.cart = [];
+      state.promoApplied = false;
+      saveState();
+      renderCartPage();
+      showToast(state.lang === 'ru'
+        ? 'Заказ принят! Персональный консьерж BOOKORA свяжется с вами в течение 10 минут.'
+        : 'Buyurtmangiz qabul qilindi! BOOKORA konsyerji 10 daqiqa ichida siz bilan bog‘lanadi.');
+    }
+
+    function toggleFavorite(bookId) {
+      const idx = state.favorites.indexOf(bookId);
+      const book = BOOKS.find(b => b.id === bookId);
+      const title = book ? (state.lang === 'ru' ? book.titleRu : book.titleUz) : '';
+
+      if (idx > -1) {
+        state.favorites.splice(idx, 1);
+        showToast(state.lang === 'ru' ? `Удалено из избранного: «${title}»` : `Sevimlilardan o‘chirildi: «${title}»`);
+      } else {
+        state.favorites.push(bookId);
+        showToast(state.lang === 'ru' ? `Добавлено в избранное: «${title}»` : `Sevimlilarga qo‘shildi: «${title}»`);
+      }
+      saveState();
+      if (state.currentPage === 'index.html') renderHomePage();
+      if (state.currentPage === 'catalog.html') renderCatalogPage();
+      if (state.currentPage === 'favorites.html') renderFavoritesPage();
+    }
+
+    function moveAllFavoritesToCart() {
+      if (state.favorites.length === 0) {
+        showToast(state.lang === 'ru' ? 'Список избранного пуст' : 'Sevimlilar ro‘yxati bo‘sh');
+        return;
+      }
+      state.favorites.forEach(id => {
+        const existing = state.cart.find(i => i.id === id);
+        if (!existing) state.cart.push({ id, qty: 1 });
+      });
+      saveState();
+      navigateTo('cart.html');
+      showToast(state.lang === 'ru' ? 'Все избранные книги перенесены в корзину!' : 'Barcha sevimli kitoblar savatchaga qo‘shildi!');
+    }
+
+    function addSpecialBundleToCart() {
+      [1, 2, 4].forEach(id => {
+        const existing = state.cart.find(i => i.id === id);
+        if (!existing) state.cart.push({ id, qty: 1 });
+      });
+      state.promoApplied = true;
+      saveState();
+      navigateTo('cart.html');
+      showToast(state.lang === 'ru'
+        ? 'Коллекционная трилогия добавлена в корзину со скидкой!'
+        : 'Kolleksion trilogiya chegirma bilan savatchaga qo‘shildi!');
+    }
+
+    function setLanguage(lang) {
+      state.lang = lang;
+      saveState();
+
+      // Toggle button styles
+      const btnRu = document.getElementById('lang-ru');
+      const btnUz = document.getElementById('lang-uz');
+      if (lang === 'ru') {
+        btnRu.className = 'px-2.5 py-1 rounded-full text-xs font-semibold transition bg-espresso text-cream';
+        btnUz.className = 'px-2.5 py-1 rounded-full text-xs font-semibold transition text-espresso/70 hover:text-espresso';
+      } else {
+        btnUz.className = 'px-2.5 py-1 rounded-full text-xs font-semibold transition bg-espresso text-cream';
+        btnRu.className = 'px-2.5 py-1 rounded-full text-xs font-semibold transition text-espresso/70 hover:text-espresso';
+      }
+
+      // Translate all [data-i18n] nodes
+      const dict = I18N[lang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.textContent = dict[key];
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (dict[key]) el.setAttribute('placeholder', dict[key]);
+      });
+
+      updateHeroBookCardUI();
+      renderHomePage();
+      renderCatalogPage();
+      if (state.currentPage === 'book.html') renderBookDetailPage();
+      if (state.currentPage === 'favorites.html') renderFavoritesPage();
+      if (state.currentPage === 'cart.html') renderCartPage();
+    }
+
+    /*************************************************************************
+     * 9. MODALS, TOASTS & INTERACTIVE HELPERS
+     *************************************************************************/
+    function showToast(message) {
+      const container = document.getElementById('toast-container');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = 'pointer-events-auto bg-charcoal text-cream border border-gold/50 px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3 text-xs font-medium transform translate-y-4 opacity-0 transition-all duration-300';
+      toast.innerHTML = `
+        <div class="w-6 h-6 rounded-full bg-gold text-charcoal flex items-center justify-center shrink-0">
+          <i class="fa-solid fa-check text-[10px]"></i>
+        </div>
+        <span>${message}</span>
+      `;
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 3400);
+    }
+
+    function openAuthModal() {
+      const modal = document.getElementById('auth-modal');
+      const logoutArea = document.getElementById('auth-logout-area');
+      if (state.user) {
+        document.getElementById('auth-name-input').value = state.user.name;
+        document.getElementById('auth-email-input').value = state.user.email;
+        logoutArea.classList.remove('hidden');
+      } else {
+        logoutArea.classList.add('hidden');
+      }
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeAuthModal() {
+      const modal = document.getElementById('auth-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      const name = document.getElementById('auth-name-input').value.trim();
+      const email = document.getElementById('auth-email-input').value.trim();
+      state.user = { name, email };
+      saveState();
+      closeAuthModal();
+      showToast(state.lang === 'ru' ? `Добро пожаловать в клуб BOOKORA, ${name}!` : `BOOKORA klubiga xush kelibsiz, ${name}!`);
+    }
+
+    function logoutUser() {
+      state.user = null;
+      saveState();
+      closeAuthModal();
+      showToast(state.lang === 'ru' ? 'Вы вышли из аккаунта' : 'Hisobdan chiqdingiz');
+    }
+
+    function openExcerptModal(bookId) {
+      const book = BOOKS.find(b => b.id === bookId) || BOOKS[0];
+      const title = state.lang === 'ru' ? book.titleRu : book.titleUz;
+      const desc = state.lang === 'ru' ? book.descRu : book.descUz;
+      document.getElementById('excerpt-title').textContent = title;
+      document.getElementById('excerpt-body').innerHTML = `
+        <p class="first-letter:font-serif first-letter:text-5xl first-letter:text-goldDark first-letter:float-left first-letter:mr-3 first-letter:leading-none">
+          ${desc}
+        </p>
+        <p>
+          В тишине обсерватории, когда ночной ветер с гор остужал мраморные плиты секстанта, старый хранитель свитков раскрыл тяжёлый сафьяновый переплёт. Золотые чернила на плотной самаркандской бумаге мерцали в свете масляной лампады, словно созвездия, спустившиеся на ладонь человека...
+        </p>
+        <p>
+          «Книга — это не просто сосуд для слов, — гласила запись на полях. — Это мост между умами, разделёнными столетиями, и единственное сокровище, которое умножается, когда им делятся».
+        </p>
+      `;
+      const modal = document.getElementById('excerpt-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeExcerptModal() {
+      const modal = document.getElementById('excerpt-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function openExportModal() {
+      const modal = document.getElementById('export-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeExportModal() {
+      const modal = document.getElementById('export-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function downloadStandalonePage(filename) {
+      let htmlSource = document.documentElement.outerHTML;
+      htmlSource = htmlSource.replace("currentPage: 'index.html'", `currentPage: '${filename}'`);
+      const blob = new Blob(['<!DOCTYPE html>\n' + htmlSource], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast(`Файл ${filename} успешно сгенерирован и скачан!`);
+    }
+
+    function toggleMobileMenu() {
+      const menu = document.getElementById('mobile-menu');
+      menu.classList.toggle('hidden');
+    }
+
+    function toggleSearchModal() {
+      navigateTo('catalog.html');
+      setTimeout(() => {
+        const input = document.getElementById('catalog-search-input');
+        if (input) input.focus();
+      }, 450);
+    }
+
+    function handleNewsletterSubmit(e) {
+      e.preventDefault();
+      document.getElementById('newsletter-email').value = '';
+      showToast(state.lang === 'ru'
+        ? 'Благодарим за подписку! Промокод BOOKORA10 отправлен на вашу почту.'
+        : 'Obuna uchun rahmat! BOOKORA10 promokodi emailingizga yuborildi.');
+    }
+
+    function handleContactSubmit(e) {
+      e.preventDefault();
+      e.target.reset();
+      showToast(state.lang === 'ru'
+        ? 'Ваше письмо передано главному куратору BOOKORA.'
+        : 'Xabaringiz BOOKORA bosh kuratoriga yetkazildi.');
+    }
+
+    /*************************************************************************
+     * 10. THREE.JS INTERACTIVE 3D PHYSICAL BOOK ENGINE (HERO STAGE)
+     *************************************************************************/
+    let scene, camera, renderer, bookRootGroup, frontCoverPivot, flipPages = [];
+    let isBookOpen = false;
+    let currentFlippedPageIndex = 0;
+    let targetRotX = 0.12, targetRotY = -0.38;
+    let currentRotX = 0.12, currentRotY = -0.38;
+    let isHovered3D = false;
+    let frontCoverMesh = null;
+    let spineMesh = null;
+    let pointLightGold = null;
+    let shadowPlane = null;
+
+    // Generate high-DPI Procedural Canvas Texture for 3D Book Front Cover
+    function createBookCoverTexture(book) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 1440;
+      const ctx = canvas.getContext('2d');
+
+      const [bg1, goldCol, bg2] = book.coverPalette || ['#1D1614', '#C6A46C', '#3A2D27'];
+
+      // Rich Leather / Cloth Background Gradient
+      const grad = ctx.createLinearGradient(0, 0, 1024, 1440);
+      grad.addColorStop(0, bg1);
+      grad.addColorStop(0.5, bg2);
+      grad.addColorStop(1, '#120D0B');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1024, 1440);
+
+      // Subtle tactile weave texture lines
+      ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 1440; i += 6) {
+        ctx.beginPath();
+        ctx.moveTo(0, i);
+        ctx.lineTo(1024, i);
+        ctx.stroke();
+      }
+
+      // Spine Crease Groove on Left Edge
+      const creaseGrad = ctx.createLinearGradient(0, 0, 75, 0);
+      creaseGrad.addColorStop(0, 'rgba(0,0,0,0.65)');
+      creaseGrad.addColorStop(0.5, 'rgba(255,255,255,0.08)');
+      creaseGrad.addColorStop(0.75, 'rgba(0,0,0,0.45)');
+      creaseGrad.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = creaseGrad;
+      ctx.fillRect(0, 0, 75, 1440);
+
+      // Gold Foil Double Borders
+      ctx.strokeStyle = goldCol;
+      ctx.lineWidth = 6;
+      ctx.strokeRect(86, 76, 868, 1288);
+      ctx.lineWidth = 2;
+      ctx.strokeRect(106, 96, 828, 1248);
+
+      // Corner Ornaments
+      const corners = [[106, 96], [934, 96], [106, 1344], [934, 1344]];
+      corners.forEach(([cx, cy]) => {
+        ctx.beginPath();
+        ctx.arc(cx, cy, 24, 0, Math.PI * 2);
+        ctx.stroke();
+      });
+
+      // Top Header Foil Text
+      ctx.fillStyle = goldCol;
+      ctx.font = '600 26px "Plus Jakarta Sans", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('B O O K O R A   M A I S O N   D U   L I V R E', 520, 185);
+
+      // Central Astrolabe / Sacred Geometry Emblem
+      ctx.save();
+      ctx.translate(520, 540);
+      ctx.strokeStyle = goldCol;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.arc(0, 0, 155, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(0, 0, 125, 0, Math.PI * 2);
+      ctx.stroke();
+
+      for (let a = 0; a < 12; a++) {
+        ctx.rotate(Math.PI / 6);
+        ctx.beginPath();
+        ctx.moveTo(0, -125);
+        ctx.lineTo(0, -155);
+        ctx.stroke();
+      }
+      // Inner Star
+      ctx.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const angle = (i * Math.PI) / 4;
+        const r = i % 2 === 0 ? 95 : 42;
+        const x = Math.cos(angle) * r;
+        const y = Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.stroke();
+      ctx.restore();
+
+      // Book Title in High-Contrast Editorial Serif
+      ctx.fillStyle = '#F5F0E8';
+      ctx.font = 'bold 64px "Cormorant Garamond", Georgia, serif';
+      const title = state.lang === 'ru' ? book.titleRu : book.titleUz;
+      const words = title.split(' ');
+      let lines = [];
+      let currentLine = words[0];
+      for (let i = 1; i < words.length; i++) {
+        if ((currentLine + ' ' + words[i]).length < 16) {
+          currentLine += ' ' + words[i];
+        } else {
+          lines.push(currentLine);
+          currentLine = words[i];
+        }
+      }
+      lines.push(currentLine);
+
+      lines.forEach((line, index) => {
+        ctx.fillText(line.toUpperCase(), 520, 845 + index * 74);
+      });
+
+      // Divider Line
+      ctx.strokeStyle = goldCol;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(370, 1080);
+      ctx.lineTo(670, 1080);
+      ctx.stroke();
+
+      // Author Name
+      ctx.fillStyle = goldCol;
+      ctx.font = '500 32px "Cormorant Garamond", Georgia, serif';
+      const author = state.lang === 'ru' ? book.authorRu : book.authorUz;
+      ctx.fillText(author, 520, 1145);
+
+      // Edition Footer
+      ctx.font = '400 20px "Plus Jakarta Sans", sans-serif';
+      ctx.fillStyle = 'rgba(245, 240, 232, 0.65)';
+      ctx.fillText('COLLECTOR’S ARCHIVAL EDITION • TASHKENT MMXXVI', 520, 1275);
+
+      const texture = new THREE.CanvasTexture(canvas);
+      texture.anisotropy = 4;
+      return texture;
+    }
+
+    // Generate Spine Texture
+    function createSpineTexture(book) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 1440;
+      const ctx = canvas.getContext('2d');
+      const [bg1, goldCol] = book.coverPalette || ['#1D1614', '#C6A46C'];
+
+      ctx.fillStyle = bg1;
+      ctx.fillRect(0, 0, 256, 1440);
+
+      // Gold ribs along spine
+      ctx.strokeStyle = goldCol;
+      ctx.lineWidth = 6;
+      [140, 280, 1160, 1300].forEach(y => {
+        ctx.beginPath();
+        ctx.moveTo(20, y);
+        ctx.lineTo(236, y);
+        ctx.stroke();
+      });
+
+      ctx.save();
+      ctx.translate(128, 720);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillStyle = goldCol;
+      ctx.font = 'bold 42px "Cormorant Garamond", Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('BOOKORA  •  ' + book.titleRu.toUpperCase(), 0, 14);
+      ctx.restore();
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    // Generate Realistic Typography Inside Page Texture
+    function createInsidePageTexture(pageNum, isLeftPage = false) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 1440;
+      const ctx = canvas.getContext('2d');
+
+      // Warm Munken Cream Paper
+      ctx.fillStyle = '#F7F2E7';
+      ctx.fillRect(0, 0, 1024, 1440);
+
+      // Inner Spine Shadow Gradient
+      const shadowGrad = isLeftPage
+        ? ctx.createLinearGradient(1024, 0, 880, 0)
+        : ctx.createLinearGradient(0, 0, 140, 0);
+      shadowGrad.addColorStop(0, 'rgba(36, 27, 23, 0.28)');
+      shadowGrad.addColorStop(1, 'rgba(36, 27, 23, 0)');
+      ctx.fillStyle = shadowGrad;
+      ctx.fillRect(0, 0, 1024, 1440);
+
+      // Border Frame
+      ctx.strokeStyle = 'rgba(198, 164, 108, 0.45)';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(90, 95, 844, 1250);
+
+      // Header
+      ctx.fillStyle = '#8C7355';
+      ctx.font = 'italic 24px "Cormorant Garamond", Georgia, serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(`BOOKORA ARCHIVAL EDITION  —  FOLIO ${pageNum}`, 512, 155);
+
+      // Chapter Title
+      ctx.fillStyle = '#241B17';
+      ctx.font = 'bold 48px "Cormorant Garamond", Georgia, serif';
+      ctx.fillText(pageNum === 1 ? 'ГЛАВА I. ИСКУССТВО ЧТЕНИЯ' : `ЧАСТЬ ${pageNum}. ФИЛОСОФИЯ ВОСТОКА`, 512, 260);
+
+      // Decorative Gold Flourish
+      ctx.strokeStyle = '#C6A46C';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(420, 295);
+      ctx.lineTo(604, 295);
+      ctx.stroke();
+
+      // Editorial Body Paragraphs
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#2B211D';
+      ctx.font = '30px "Cormorant Garamond", Georgia, serif';
+
+      const sampleLines = [
+        "Каждая великая библиотека начинается с одной книги,",
+        "способной изменить оптику нашего взгляда на мир.",
+        "Когда пальцы касаются плотного переплёта с золотым",
+        "тиснением, время замедляет свой бег, уступая место",
+        "вдумчивому диалогу с величайшими умами человечества.",
+        "",
+        "В эпоху мгновенных сообщений физическая книга",
+        "становится территорией интеллектуального суверенитета.",
+        "Шведская кремовая бумага хранит тепло типографской",
+        "краски, а шелест переворачиваемой страницы звучит",
+        "как музыка для тех, кто ценит подлинность.",
+        "",
+        "«Дом, в котором нет книг, подобен телу, лишённому",
+        "души» — эта древняя мудрость обретает новое дыхание",
+        "в стенах литературного дома BOOKORA в Ташкенте."
+      ];
+
+      sampleLines.forEach((line, idx) => {
+        ctx.fillText(line, 145, 380 + idx * 54);
+      });
+
+      // Page Number Footer
+      ctx.textAlign = 'center';
+      ctx.fillStyle = '#9E7B43';
+      ctx.font = 'bold 26px "Cormorant Garamond", Georgia, serif';
+      ctx.fillText(`— ${pageNum * 2} —`, 512, 1295);
+
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    // Create Layered Paper Edges Texture for Book Block Thickness
+    function createPaperBlockEdgesTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      for (let x = 0; x < 256; x++) {
+        ctx.fillStyle = x % 3 === 0 ? '#EAE0D2' : (x % 2 === 0 ? '#F7F3EB' : '#DFD2BF');
+        ctx.fillRect(x, 0, 1, 512);
+      }
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    function initHero3DBook() {
+      const container = document.getElementById('hero-canvas-container');
+      if (!container || typeof THREE === 'undefined') return;
+
+      const width = container.clientWidth || 600;
+      const height = container.clientHeight || 560;
+
+      scene = new THREE.Scene();
+
+      camera = new THREE.PerspectiveCamera(36, width / height, 0.1, 100);
+      camera.position.set(0, 0.2, 8.2);
+
+      renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+      renderer.setSize(width, height);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      container.innerHTML = '';
+      container.appendChild(renderer.domElement);
+
+      // Lighting Setup
+      const ambientLight = new THREE.AmbientLight(0xFFF6E9, 0.78);
+      scene.add(ambientLight);
+
+      const mainDirLight = new THREE.DirectionalLight(0xFFF0D4, 1.15);
+      mainDirLight.position.set(5, 8, 6);
+      mainDirLight.castShadow = true;
+      scene.add(mainDirLight);
+
+      pointLightGold = new THREE.PointLight(0xC6A46C, 1.4, 15);
+      pointLightGold.position.set(-3, 2, 4.5);
+      scene.add(pointLightGold);
+
+      const rimLight = new THREE.DirectionalLight(0xDFC394, 0.6);
+      rimLight.position.set(-5, -3, -4);
+      scene.add(rimLight);
+
+      // Book Dimensions
+      const bookW = 2.75;
+      const bookH = 3.85;
+      const bookThickness = 0.52;
+      const coverThick = 0.06;
+
+      bookRootGroup = new THREE.Group();
+      scene.add(bookRootGroup);
+
+      const currentBook = BOOKS.find(b => b.id === state.heroBookId) || BOOKS[0];
+      const coverTexture = createBookCoverTexture(currentBook);
+      const spineTexture = createSpineTexture(currentBook);
+      const paperEdgeTex = createPaperBlockEdgesTexture();
+      const leftInsideTex = createInsidePageTexture(1, true);
+      const rightInsideTex = createInsidePageTexture(1, false);
+
+      // 1. Back Cover (Stationary relative to bookRootGroup)
+      const backCoverGeom = new THREE.BoxGeometry(bookW, bookH, coverThick);
+      const darkLeatherMat = new THREE.MeshStandardMaterial({
+        color: 0x1D1614,
+        roughness: 0.42,
+        metalness: 0.15
+      });
+      const backCoverMesh = new THREE.Mesh(backCoverGeom, darkLeatherMat);
+      backCoverMesh.position.set(0, 0, -bookThickness / 2);
+      bookRootGroup.add(backCoverMesh);
+
+      // 2. Spine (Left edge connecting front & back covers)
+      const spineGeom = new THREE.BoxGeometry(coverThick * 1.4, bookH, bookThickness + coverThick);
+      const spineMaterials = [
+        darkLeatherMat,
+        new THREE.MeshStandardMaterial({ map: spineTexture, roughness: 0.35, metalness: 0.25 }),
+        darkLeatherMat,
+        darkLeatherMat,
+        darkLeatherMat,
+        darkLeatherMat
+      ];
+      spineMesh = new THREE.Mesh(spineGeom, spineMaterials);
+      spineMesh.position.set(-bookW / 2, 0, 0);
+      bookRootGroup.add(spineMesh);
+
+      // 3. Thick Page Block (Rests on Back Cover)
+      const pageBlockW = bookW - 0.14;
+      const pageBlockH = bookH - 0.16;
+      const pageBlockThick = bookThickness - coverThick;
+      const pageBlockGeom = new THREE.BoxGeometry(pageBlockW, pageBlockH, pageBlockThick);
+
+      const pageBlockMaterials = [
+        new THREE.MeshStandardMaterial({ map: paperEdgeTex, roughness: 0.7 }), // Right edge
+        darkLeatherMat, // Spine side
+        new THREE.MeshStandardMaterial({ map: paperEdgeTex, roughness: 0.7 }), // Top edge
+        new THREE.MeshStandardMaterial({ map: paperEdgeTex, roughness: 0.7 }), // Bottom edge
+        new THREE.MeshStandardMaterial({ map: rightInsideTex, roughness: 0.65 }), // Front visible page
+        new THREE.MeshStandardMaterial({ color: 0xF5F0E8 })
+      ];
+      const pageBlockMesh = new THREE.Mesh(pageBlockGeom, pageBlockMaterials);
+      pageBlockMesh.position.set(-0.02, 0, -0.02);
+      bookRootGroup.add(pageBlockMesh);
+
+      // 4. Individual Animated Flip Pages (Pivoted at Spine X = -bookW/2)
+      flipPages = [];
+      for (let i = 0; i < 3; i++) {
+        const pagePivot = new THREE.Group();
+        pagePivot.position.set(-bookW / 2 + 0.04, 0, pageBlockThick / 2 - 0.01 - i * 0.008);
+
+        const singlePageGeom = new THREE.BoxGeometry(pageBlockW - 0.04, pageBlockH - 0.02, 0.008);
+        const frontTex = createInsidePageTexture(i + 2, false);
+        const backTex = createInsidePageTexture(i + 2, true);
+        const singlePageMats = [
+          new THREE.MeshStandardMaterial({ color: 0xEAE0D2 }),
+          new THREE.MeshStandardMaterial({ color: 0xEAE0D2 }),
+          new THREE.MeshStandardMaterial({ color: 0xEAE0D2 }),
+          new THREE.MeshStandardMaterial({ color: 0xEAE0D2 }),
+          new THREE.MeshStandardMaterial({ map: frontTex, roughness: 0.6 }),
+          new THREE.MeshStandardMaterial({ map: backTex, roughness: 0.6 })
+        ];
+        const pageMesh = new THREE.Mesh(singlePageGeom, singlePageMats);
+        pageMesh.position.set((pageBlockW - 0.04) / 2, 0, 0);
+        pagePivot.add(pageMesh);
+        bookRootGroup.add(pagePivot);
+        flipPages.push(pagePivot);
+      }
+
+      // 5. Front Cover Group (Pivoted at Left Spine so it opens realistically!)
+      frontCoverPivot = new THREE.Group();
+      frontCoverPivot.position.set(-bookW / 2, 0, bookThickness / 2);
+      bookRootGroup.add(frontCoverPivot);
+
+      const frontCoverGeom = new THREE.BoxGeometry(bookW, bookH, coverThick);
+      const frontCoverMats = [
+        new THREE.MeshStandardMaterial({ color: 0xC6A46C, metalness: 0.6, roughness: 0.3 }), // Gold trim edge
+        darkLeatherMat,
+        darkLeatherMat,
+        darkLeatherMat,
+        new THREE.MeshStandardMaterial({ map: coverTexture, roughness: 0.32, metalness: 0.18 }), // Outer Front Cover
+        new THREE.MeshStandardMaterial({ map: leftInsideTex, roughness: 0.65 }) // Inside Front Cover (Ex-libris / Left Page)
+      ];
+      frontCoverMesh = new THREE.Mesh(frontCoverGeom, frontCoverMats);
+      frontCoverMesh.position.set(bookW / 2, 0, 0);
+      frontCoverPivot.add(frontCoverMesh);
+
+      // Soft Contact Shadow Beneath Book
+      const shadowCanvas = document.createElement('canvas');
+      shadowCanvas.width = 256;
+      shadowCanvas.height = 256;
+      const sCtx = shadowCanvas.getContext('2d');
+      const sGrad = sCtx.createRadialGradient(128, 128, 15, 128, 128, 120);
+      sGrad.addColorStop(0, 'rgba(22, 16, 14, 0.36)');
+      sGrad.addColorStop(1, 'rgba(22, 16, 14, 0)');
+      sCtx.fillStyle = sGrad;
+      sCtx.fillRect(0, 0, 256, 256);
+
+      const shadowTex = new THREE.CanvasTexture(shadowCanvas);
+      const shadowGeom = new THREE.PlaneGeometry(5.5, 2.2);
+      const shadowMat = new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false });
+      shadowPlane = new THREE.Mesh(shadowGeom, shadowMat);
+      shadowPlane.rotation.x = -Math.PI / 2;
+      shadowPlane.position.set(0, -2.45, 0);
+      scene.add(shadowPlane);
+
+      // Initial Book Pose
+      bookRootGroup.rotation.set(currentRotX, currentRotY, 0.04);
+
+      // Mouse & Touch Event Listeners for 3D Tilt, Lighting & Click-to-Open
+      let pointerDownX = 0;
+      let pointerDownY = 0;
+
+      container.addEventListener('mousemove', (e) => {
+        const rect = container.getBoundingClientRect();
+        const normX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        const normY = ((e.clientY - rect.top) / rect.height) * 2 - 1;
+
+        targetRotY = (isBookOpen ? 0.15 : -0.35) + normX * 0.55;
+        targetRotX = 0.12 + normY * 0.32;
+
+        if (pointLightGold) {
+          pointLightGold.position.x = normX * 4.5;
+          pointLightGold.position.y = -normY * 3.5 + 1.5;
+        }
+      });
+
+      container.addEventListener('mouseenter', () => {
+        isHovered3D = true;
+        if (!isBookOpen && frontCoverPivot && typeof gsap !== 'undefined') {
+          // Subtle peek-open on hover
+          gsap.to(frontCoverPivot.rotation, { y: -0.22, duration: 0.5, ease: 'power2.out' });
+          gsap.to(bookRootGroup.scale, { x: 1.04, y: 1.04, z: 1.04, duration: 0.5, ease: 'power2.out' });
+        }
+      });
+
+      container.addEventListener('mouseleave', () => {
+        isHovered3D = false;
+        targetRotY = isBookOpen ? 0.18 : -0.38;
+        targetRotX = 0.12;
+        if (!isBookOpen && frontCoverPivot && typeof gsap !== 'undefined') {
+          gsap.to(frontCoverPivot.rotation, { y: 0, duration: 0.5, ease: 'power2.out' });
+          gsap.to(bookRootGroup.scale, { x: 1, y: 1, z: 1, duration: 0.5, ease: 'power2.out' });
+        }
+      });
+
+      container.addEventListener('mousedown', (e) => {
+        pointerDownX = e.clientX;
+        pointerDownY = e.clientY;
+      });
+
+      container.addEventListener('mouseup', (e) => {
+        const dist = Math.hypot(e.clientX - pointerDownX, e.clientY - pointerDownY);
+        if (dist < 8) {
+          // Clicked directly on the 3D book stage
+          if (!isBookOpen) {
+            toggle3DBookOpen();
+          } else {
+            flip3DPage();
+          }
+        }
+      });
+
+      // Touch move support for mobile
+      container.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 1) {
+          const rect = container.getBoundingClientRect();
+          const touch = e.touches[0];
+          const normX = ((touch.clientX - rect.left) / rect.width) * 2 - 1;
+          const normY = ((touch.clientY - rect.top) / rect.height) * 2 - 1;
+          targetRotY = (isBookOpen ? 0.15 : -0.3) + normX * 0.6;
+          targetRotX = 0.1 + normY * 0.25;
+        }
+      }, { passive: true });
+
+      window.addEventListener('resize', () => {
+        if (!container || !renderer || !camera) return;
+        const w = container.clientWidth;
+        const h = container.clientHeight;
+        if (w > 0 && h > 0) {
+          camera.aspect = w / h;
+          camera.updateProjectionMatrix();
+          renderer.setSize(w, h);
+        }
+      });
+    }
+
+    // Animation Loop
+    let clock = new THREE.Clock();
+    function animateHero3D() {
+      requestAnimationFrame(animateHero3D);
+      if (!renderer || !scene || !camera || !bookRootGroup) return;
+
+      const elapsed = clock.getElapsedTime();
+
+      // Smooth inertia damping towards mouse target
+      currentRotX += (targetRotX - currentRotX) * 0.07;
+      currentRotY += (targetRotY - currentRotY) * 0.07;
+
+      bookRootGroup.rotation.x = currentRotX;
+      bookRootGroup.rotation.y = currentRotY;
+
+      // Gentle levitation float
+      bookRootGroup.position.y = Math.sin(elapsed * 1.8) * 0.09;
+
+      if (shadowPlane) {
+        const sScale = 1 - Math.sin(elapsed * 1.8) * 0.05;
+        shadowPlane.scale.set(sScale, sScale, 1);
+        shadowPlane.position.x = bookRootGroup.position.x;
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    // Interactive Controls for the 3D Book
+    function toggle3DBookOpen() {
+      if (!frontCoverPivot || typeof gsap === 'undefined') return;
+      isBookOpen = !isBookOpen;
+
+      const statusBadge = document.getElementById('book-3d-status-badge');
+      const btnText = document.getElementById('btn-3d-open-text');
+
+      if (isBookOpen) {
+        // Open front cover ~160 degrees and shift book slightly right so spread is centered
+        gsap.to(frontCoverPivot.rotation, { y: -Math.PI * 0.84, duration: 1.15, ease: 'power3.inOut' });
+        gsap.to(bookRootGroup.position, { x: 0.95, duration: 1.15, ease: 'power3.inOut' });
+        targetRotY = 0.18;
+        if (statusBadge) statusBadge.textContent = I18N[state.lang].book_state_open;
+        if (btnText) btnText.textContent = I18N[state.lang].btn_close_book;
+      } else {
+        // First return any flipped pages back before closing cover
+        flipPages.forEach((p, idx) => {
+          gsap.to(p.rotation, { y: 0, duration: 0.55, delay: idx * 0.06, ease: 'power2.inOut' });
+        });
+        currentFlippedPageIndex = 0;
+
+        gsap.to(frontCoverPivot.rotation, { y: 0, duration: 1.05, delay: 0.15, ease: 'power3.inOut' });
+        gsap.to(bookRootGroup.position, { x: 0, duration: 1.05, ease: 'power3.inOut' });
+        targetRotY = -0.38;
+        if (statusBadge) statusBadge.textContent = I18N[state.lang].book_state_closed;
+        if (btnText) btnText.textContent = I18N[state.lang].btn_open_book;
+      }
+    }
+
+    function flip3DPage() {
+      if (!frontCoverPivot || typeof gsap === 'undefined') return;
+
+      // If book is closed, open it first and then flip page
+      if (!isBookOpen) {
+        toggle3DBookOpen();
+        setTimeout(() => flip3DPage(), 850);
+        return;
+      }
+
+      if (currentFlippedPageIndex < flipPages.length) {
+        const pagePivot = flipPages[currentFlippedPageIndex];
+        gsap.to(pagePivot.rotation, {
+          y: -Math.PI * 0.81 + currentFlippedPageIndex * 0.02,
+          duration: 0.95,
+          ease: 'power2.inOut'
+        });
+        currentFlippedPageIndex++;
+        showToast(state.lang === 'ru'
+          ? `Страница ${currentFlippedPageIndex * 2} открыта`
+          : `${currentFlippedPageIndex * 2}-sahifa ochildi`);
+      } else {
+        // Flip all pages back to start
+        flipPages.slice().reverse().forEach((p, idx) => {
+          gsap.to(p.rotation, {
+            y: 0,
+            duration: 0.75,
+            delay: idx * 0.12,
+            ease: 'power2.inOut'
+          });
+        });
+        currentFlippedPageIndex = 0;
+        showToast(state.lang === 'ru' ? 'Возврат к первой главе' : 'Birinchi bobga qaytildi');
+      }
+    }
+
+    function spin3DBook360() {
+      if (!bookRootGroup || typeof gsap === 'undefined') return;
+      gsap.to(bookRootGroup.rotation, {
+        y: bookRootGroup.rotation.y + Math.PI * 2,
+        duration: 1.4,
+        ease: 'power2.inOut',
+        onComplete: () => {
+          currentRotY = targetRotY;
+        }
+      });
+    }
+
+    function switchHero3DBook(bookId) {
+      state.heroBookId = bookId;
+      const book = BOOKS.find(b => b.id === bookId) || BOOKS[0];
+
+      // Update button active pills
+      document.querySelectorAll('.hero-edition-btn').forEach(btn => {
+        if (Number(btn.getAttribute('data-hero-edition')) === bookId) {
+          btn.className = 'hero-edition-btn px-3 py-1 rounded-full text-xs font-medium bg-gold text-charcoal transition shrink-0';
+        } else {
+          btn.className = 'hero-edition-btn px-3 py-1 rounded-full text-xs font-medium bg-beige/80 text-espresso hover:bg-beige transition shrink-0';
+        }
+      });
+
+      // Update 3D Cover & Spine Texture dynamically
+      if (frontCoverMesh && spineMesh) {
+        const newCoverTex = createBookCoverTexture(book);
+        const newSpineTex = createSpineTexture(book);
+        frontCoverMesh.material[4].map = newCoverTex;
+        frontCoverMesh.material[4].needsUpdate = true;
+        spineMesh.material[1].map = newSpineTex;
+        spineMesh.material[1].needsUpdate = true;
+        spin3DBook360();
+      }
+
+      updateHeroBookCardUI();
+    }
+
+    function updateHeroBookCardUI() {
+      const book = BOOKS.find(b => b.id === state.heroBookId) || BOOKS[0];
+      const titleEl = document.getElementById('hero-card-title');
+      const authorEl = document.getElementById('hero-card-author');
+      const priceEl = document.getElementById('hero-card-price');
+      const priceBtnEl = document.getElementById('hero-book-price-btn');
+
+      if (titleEl) titleEl.textContent = state.lang === 'ru' ? book.titleRu : book.titleUz;
+      if (authorEl) authorEl.textContent = state.lang === 'ru' ? book.authorRu : book.authorUz;
+      if (priceEl) priceEl.textContent = formatPrice(book.price);
+      if (priceBtnEl) priceBtnEl.textContent = `${I18N[state.lang].add_to_cart} • ${formatPrice(book.price)}`;
+    }
+
+    function openSelectedHeroBookPage() {
+      openBookPage(state.heroBookId);
+    }
+
+    function addHeroBookToCart() {
+      addToCart(state.heroBookId, 1);
+    }
+
+    function viewBookInHero3D(bookId) {
+      navigateTo('index.html');
+      setTimeout(() => {
+        switchHero3DBook(bookId);
+      }, 650);
+    }
+
+    /*************************************************************************
+     * 11. INITIALIZATION ON WINDOW LOAD
+     *************************************************************************/
+    window.onload = function () {
+      // Animate Preloader Bar & Reveal Platform
+      const bar = document.getElementById('preloader-bar');
+      const preloader = document.getElementById('preloader');
+      if (bar) bar.style.width = '100%';
+
+      // Initialize UI & Language
+      updateBadges();
+      setLanguage(state.lang);
+      navigateTo(state.currentPage, true);
+
+      // Initialize Three.js 3D Book and start render loop
+      initHero3DBook();
+      animateHero3D();
+
+      setTimeout(() => {
+        if (preloader) {
+          preloader.style.opacity = '0';
+          setTimeout(() => preloader.remove(), 700);
+        }
+      }, 650);
+    };
+  </script>
+</body>
+</html>
